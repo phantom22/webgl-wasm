@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <canvas id="gl-canvas"></canvas>
+    <!-- <script type="x-shader/vs" id="vertex-draw">
+        #version 300 es
+
+        layout(std140, column_major) uniform;
+        
+        layout(location=0) in vec4 position;
+        layout(location=1) in vec2 uv;
+        layout(location=2) in vec4 normal;
+        
+        uniform SceneUniforms {
+            mat4 viewProj;
+            vec4 eyePosition;
+            vec4 lightPosition;
+        } uScene;       
+        
+        uniform mat4 uModel;
+
+        out  vec3 vPosition;
+        out  vec2 vUV;
+        out  vec3 vNormal;
+        void main() {
+            vec4 worldPosition = uModel * position;
+            vPosition = worldPosition.xyz;
+            vUV = uv;
+            vNormal = (uModel * normal).xyz;
+            gl_Position = uScene.viewProj * worldPosition;
+        }
+    </script>
+    <script type="x-shader/vf" id="fragment-draw">
+        #version 300 es
+        precision highp float;
+
+        layout(std140, column_major) uniform;
+
+        uniform SceneUniforms {
+            mat4 viewProj;
+            vec4 eyePosition;
+            vec4 lightPosition;
+        } uScene;
+
+        uniform sampler2D tex;
+        
+        in vec3 vPosition;
+        in vec2 vUV;
+        in vec3 vNormal;
+
+        out vec4 fragColor;
+        void main() {
+            vec3 color = texture(tex, vUV).rgb;
+
+            vec3 normal = normalize(vNormal);
+            vec3 eyeVec = normalize(uScene.eyePosition.xyz - vPosition);
+            vec3 incidentVec = normalize(vPosition - uScene.lightPosition.xyz);
+            vec3 lightVec = -incidentVec;
+            float diffuse = max(dot(lightVec, normal), -0.1);
+            float highlight = pow(max(dot(eyeVec, reflect(incidentVec, normal)), 0.0), 300.0);
+            float ambient = 0.2;
+            fragColor = vec4(color * (diffuse + highlight + ambient), 1.0);
+        }
+    </script> -->
+    <script type="x-shader/vs" id="vertex-draw">
+#version 300 es
+
+precision highp float;
+precision highp sampler2DArray;
+        
+layout(std140) uniform SceneUniforms {
+    mat4 viewProj;
+    vec4 eyePosition;
+    vec4 lightPosition;
+} uScene;
+        
+layout(location=0) in vec4 position; // Vertex position
+layout(location=1) in vec2 uv;       // UV coordinates
+layout(location=2) in vec4 normal;    // Vertex normal
+        
+uniform mat4 uModel;                  // Model matrix
+uniform mat3 uNormal;                 // Normal matrix
+uniform sampler2DArray uTextureArray; // Texture array
+        
+out vec3 vPosition;                   // Position to fragment shader
+out vec2 vUV;                         // UV coordinates to fragment shader
+out vec3 vNormal;                     // Normal to fragment shader
+        
+void main() {
+    // Sample normal map from texture array (layer 1)
+    vec3 texNormal = texture(uTextureArray, vec3(uv, 1)).rgb;
+    texNormal = normalize(texNormal * 2.0 - 1.0); // Convert from [0,1] to [-1,1] range
+        
+    // Sample displacement map from texture array (layer 3)
+    float displacementValue = texture(uTextureArray, vec3(uv, 3)).r * 0.1; // Scale as necessary
+        
+    // Normalize the vertex normal
+    vec3 normalizedNormal = normalize(normal.xyz);
+            
+    // Transform the vertex normal using the normal matrix
+    vec3 transformedNormal = normalize(uNormal * normalizedNormal);
+            
+    // Compute the original world position
+    vec4 worldPosition = uModel * position;
+        
+    // Apply displacement along the transformed normal
+    worldPosition.xyz += transformedNormal * displacementValue;
+        
+    // Output values to fragment shader
+    vPosition = worldPosition.xyz;
+    vNormal = transformedNormal; // Pass the transformed normal to the fragment shader
+    vUV = uv; // Pass UV coordinates to the fragment shader
+            
+    // Final position of the vertex
+    gl_Position = uScene.viewProj * worldPosition;
+}
+    </script>
+    <script type="x-shader/vf" id="fragment-draw">
+#version 300 es
+precision highp float;
+precision highp sampler2DArray;
+
+layout(std140, column_major) uniform;
+
+uniform SceneUniforms {
+    mat4 viewProj;
+    vec4 eyePosition;
+    vec4 lightPosition;
+} uScene;
+
+/* layer=0: albedo
+ * layer=1: normal
+ * layer=2: metallic
+ * layer=3: displacement
+ * layer=4: roughness
+ */
+uniform sampler2DArray uTextureArray;
+
+in vec3 vPosition;
+in vec2 vUV;
+in vec3 vNormal;
+
+out vec4 fragColor;
+
+void main() {
+    vec3 texAlbedo = texture(uTextureArray, vec3(vUV, 0)).rgb;
+    float metallic = texture(uTextureArray, vec3(vUV, 2)).r;
+    float roughness = texture(uTextureArray, vec3(vUV, 4)).g;
+
+    vec3 normal = normalize(vNormal);
+    vec3 eyeVec = normalize(uScene.eyePosition.xyz - vPosition);
+    vec3 incidentVec = normalize(vPosition - uScene.lightPosition.xyz);
+    vec3 lightVec = -incidentVec;
+    
+    // Diffuse contribution: Only non-metals contribute diffuse reflection
+    float diffuseFactor = 1.0 - metallic;
+    float diffuse = max(dot(lightVec, normal), 0.0);
+
+    // Specular reflection (Phong model, modified for roughness)
+    vec3 reflectVec = reflect(incidentVec, normal);
+    float specularStrength = pow(max(dot(eyeVec, reflectVec), 0.0), mix(150.0, 5.0, roughness));
+    
+    // Fresnel term: how much of the surface reflects the environment (increasing with angle)
+    float fresnel = pow(1.0 - max(dot(normal, eyeVec), 0.0), 5.0);
+    fresnel = mix(0.04, 1.0, metallic); // Use 0.04 for non-metals, 1.0 for metals
+    
+    // Combine diffuse and specular contributions
+    vec3 diffuseColor = (texAlbedo - 0.21) * diffuse * diffuseFactor;
+    vec3 specularColor = mix(vec3(0.04), texAlbedo, metallic) * specularStrength * fresnel;
+    
+    // Final color (ambient + diffuse + specular)
+    float ambient = 0.03;
+    vec3 finalColor = ambient * texAlbedo + diffuseColor + specularColor;
+
+    fragColor = vec4(finalColor, 1.0);
+
+    //fragColor = vec4(vUV.x,vUV.y,vUV.x-vUV.y,1.0);
+}
+    </script>
+    <script src="js/main.js"></script>
+</body>
+</html>

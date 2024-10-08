@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "outFile": "../js/main.js"
+    },
+    "files": [
+        "Wasm.ts",
+        "utils.ts",
+        "BufferModule_def.ts",
+        "MetalTexture.ts",
+        "main.ts"
+    ]
+}
