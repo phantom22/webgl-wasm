@@ -8,66 +8,6 @@
 </head>
 <body>
     <canvas id="gl-canvas"></canvas>
-    <!-- <script type="x-shader/vs" id="vertex-draw">
-        #version 300 es
-
-        layout(std140, column_major) uniform;
-        
-        layout(location=0) in vec4 position;
-        layout(location=1) in vec2 uv;
-        layout(location=2) in vec4 normal;
-        
-        uniform SceneUniforms {
-            mat4 viewProj;
-            vec4 eyePosition;
-            vec4 lightPosition;
-        } uScene;       
-        
-        uniform mat4 uModel;
-
-        out  vec3 vPosition;
-        out  vec2 vUV;
-        out  vec3 vNormal;
-        void main() {
-            vec4 worldPosition = uModel * position;
-            vPosition = worldPosition.xyz;
-            vUV = uv;
-            vNormal = (uModel * normal).xyz;
-            gl_Position = uScene.viewProj * worldPosition;
-        }
-    </script>
-    <script type="x-shader/vf" id="fragment-draw">
-        #version 300 es
-        precision highp float;
-
-        layout(std140, column_major) uniform;
-
-        uniform SceneUniforms {
-            mat4 viewProj;
-            vec4 eyePosition;
-            vec4 lightPosition;
-        } uScene;
-
-        uniform sampler2D tex;
-        
-        in vec3 vPosition;
-        in vec2 vUV;
-        in vec3 vNormal;
-
-        out vec4 fragColor;
-        void main() {
-            vec3 color = texture(tex, vUV).rgb;
-
-            vec3 normal = normalize(vNormal);
-            vec3 eyeVec = normalize(uScene.eyePosition.xyz - vPosition);
-            vec3 incidentVec = normalize(vPosition - uScene.lightPosition.xyz);
-            vec3 lightVec = -incidentVec;
-            float diffuse = max(dot(lightVec, normal), -0.1);
-            float highlight = pow(max(dot(eyeVec, reflect(incidentVec, normal)), 0.0), 300.0);
-            float ambient = 0.2;
-            fragColor = vec4(color * (diffuse + highlight + ambient), 1.0);
-        }
-    </script> -->
     <script type="x-shader/vs" id="vertex-draw">
 #version 300 es
 
