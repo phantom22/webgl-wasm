@@ -14,7 +14,7 @@
 precision highp float;
 precision highp sampler2DArray;
         
-layout(std140) uniform SceneUniforms {
+layout(std140, column_major) uniform SceneUniforms {
     mat4 viewProj;
     vec4 eyePosition;
     vec4 lightPosition;
@@ -66,9 +66,7 @@ void main() {
 precision highp float;
 precision highp sampler2DArray;
 
-layout(std140, column_major) uniform;
-
-uniform SceneUniforms {
+layout(std140, column_major) uniform SceneUniforms {
     mat4 viewProj;
     vec4 eyePosition;
     vec4 lightPosition;

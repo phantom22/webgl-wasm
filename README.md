@@ -19,4 +19,4 @@ Both functions return the memory offset for use in `dest/from` arguments.
 
 ---
 
-the provided example aims to show how to properly setup a typescript environment (which is strongly recommended for type safety) and a potential implementation of the imports expected by web assembly module.
+The provided example demonstrates how to set up a TypeScript environment (recommended for type safety) and implement the imports required by the WebAssembly module.
