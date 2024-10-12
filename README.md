@@ -4,6 +4,7 @@ This module implements essential data structures for 3D environments, including 
 
 It efficiently computes:
 - Rotation matrices/quaternions for any XYZ-order Euler angles.
+- Billboard matrices both fixed axis-rotation and spherical.
 - Transformation matrices for scaling, rotation (Euler angles), and translation.
 - Transformation matrices from rotation matrices or quaternions.
 - View matrices.

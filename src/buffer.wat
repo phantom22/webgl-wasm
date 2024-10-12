@@ -11460,6 +11460,506 @@
         f32.store
     )
 
+    (func $billboard_around_X (;94;) (export "billboard_around_X") (param $dest i32) (param $tpos i32)
+        (local $dx f32) (local $dy f32) (local $dz f32)
+        (local $inv_mag f32) (local $mag_sqr f32) (local $part_mag_sqr f32)
+
+        local.get $tpos
+        i32.const 4
+        i32.add
+        f32.load
+        global.get $ey
+        f32.demote_f64
+        f32.sub
+        local.tee $dy
+        local.get $dy
+        f32.mul
+
+        local.get $tpos
+        i32.const 8
+        i32.add
+        f32.load
+        global.get $ez
+        f32.demote_f64
+        f32.sub
+        local.tee $dz
+        local.get $dz
+        f32.mul
+        f32.add
+        local.tee $part_mag_sqr
+
+        local.get $tpos
+        f32.load
+        global.get $ex
+        f32.demote_f64
+        f32.sub
+        local.tee $dx
+        local.get $dx
+        f32.mul
+        f32.add
+        local.set $mag_sqr
+
+        local.get $dest
+        i32.const 24
+        i32.add
+
+        f32.const -1.0
+        local.get $mag_sqr
+        f32.sqrt
+        f32.div
+        local.tee $inv_mag
+
+        local.get $dx
+
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+
+        local.get $inv_mag
+        local.get $dy
+
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+
+        local.get $inv_mag
+        local.get $dz
+
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+
+        f32.const 1.0
+        local.get $part_mag_sqr
+        f32.sqrt
+        f32.div
+        local.tee $inv_mag
+
+        local.get $dz
+
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+
+        local.get $inv_mag
+        local.get $dy
+
+        f32.mul
+        f32.store
+
+        local.get $dest
+        f32.const 1.0
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 12
+        i32.add
+        f32.const 0.0
+        f32.store
+    )
+
+    (func $billboard_around_Y (;94;) (export "billboard_around_Y") (param $dest i32) (param $tpos i32)
+        (local $dx f32) (local $dy f32) (local $dz f32)
+        (local $inv_mag f32) (local $mag_sqr f32) (local $part_mag_sqr f32)
+
+        global.get $ex
+        f32.demote_f64
+        local.get $tpos
+        f32.load
+        f32.sub
+        local.tee $dx
+        local.get $dx
+        f32.mul
+
+        global.get $ez
+        f32.demote_f64
+        local.get $tpos
+        i32.const 8
+        i32.add
+        f32.load
+        f32.sub
+        local.tee $dz
+        local.get $dz
+        f32.mul
+        f32.add
+        local.tee $part_mag_sqr
+
+        global.get $ey
+        f32.demote_f64
+        local.get $tpos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.sub
+        local.tee $dy
+        local.get $dy
+        f32.mul
+        f32.add
+        local.set $mag_sqr
+
+        local.get $dest
+        i32.const 24
+        i32.add
+
+        f32.const 1.0
+        local.get $mag_sqr
+        f32.sqrt
+        f32.div
+        local.tee $inv_mag
+
+        local.get $dx
+
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+
+        local.get $inv_mag
+        local.get $dy
+
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+
+        local.get $inv_mag
+        local.get $dz
+
+        f32.mul
+        f32.store
+
+        local.get $dest
+
+        f32.const 1.0
+        local.get $part_mag_sqr
+        f32.sqrt
+        f32.div
+        local.tee $inv_mag
+
+        local.get $dz
+
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+
+        local.get $inv_mag
+        local.get $dx
+
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 12
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        f32.const 1.0
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        f32.const 0.0
+        f32.store
+    )
+
+    (func $billboard_around_Z (;76;) (export "billboard_around_Z") (param $dest i32) (param $tpos i32)
+        (local $dx f32) (local $dy f32)
+        (local $inv_mag f32) (local $mag_sqr f32)
+
+        global.get $ex
+        f32.demote_f64
+        local.get $tpos
+        f32.load
+        f32.sub
+        local.tee $dx
+        local.get $dx
+        f32.mul
+
+        global.get $ey
+        f32.demote_f64
+        local.get $tpos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.sub
+        local.tee $dy
+        local.get $dy
+        f32.mul
+        f32.add
+        local.set $mag_sqr
+
+        local.get $dest
+
+        f32.const 1.0
+        local.get $mag_sqr
+        f32.sqrt
+        f32.div
+        local.tee $inv_mag
+
+        local.get $dy
+
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+
+        local.get $inv_mag
+        local.get $dx
+
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 12
+        i32.add
+
+        local.get $inv_mag
+        local.get $dx
+
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        
+        local.get $inv_mag
+        local.get $dy
+
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        f32.const 1.0
+        f32.store
+    )
+
+    (func $billboard_spherical (;108;) (export "billboard_spherical") (param $dest i32) (param $tpos i32)
+        (local $dx f32) (local $dy f32) (local $dz f32)
+        (local $fx f32) (local $fy f32) (local $fz f32)
+        (local $rx f32) (local $rz f32)
+        (local $t f32) (local $part_mag_sqr f32)
+
+        f32.const 1.0
+        global.get $ex
+        f32.demote_f64
+        local.get $tpos
+        f32.load
+        f32.sub
+        local.tee $dx
+        local.get $dx
+        f32.mul
+
+        global.get $ez
+        f32.demote_f64
+        local.get $tpos
+        i32.const 8
+        i32.add
+        f32.load
+        f32.sub
+        local.tee $dz
+        local.get $dz
+        f32.mul
+        f32.add
+        local.tee $part_mag_sqr
+
+        global.get $ey
+        f32.demote_f64
+        local.get $tpos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.sub
+        local.tee $dy
+        local.get $dy
+        f32.mul
+        f32.add
+        f32.sqrt
+        f32.div
+        local.set $t
+
+        local.get $dest
+        i32.const 24
+        i32.add
+
+        local.get $dx
+        local.get $t
+        f32.mul
+        local.tee $fx
+
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+
+        local.get $dy
+        local.get $t
+        f32.mul
+        local.tee $fy
+
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+
+        local.get $dz
+        local.get $t
+        f32.mul
+        local.tee $fz
+
+        f32.store
+
+        local.get $dest
+
+        f32.const 1.0
+        local.get $part_mag_sqr
+        f32.sqrt
+        f32.div
+        local.tee $t
+
+        local.get $dz
+        
+        f32.mul
+        f32.neg
+
+        local.tee $rx
+
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+
+        local.get $dx
+        local.get $t
+        
+        f32.mul
+
+        local.tee $rz
+
+        f32.store
+
+        local.get $dest
+        i32.const 12
+        i32.add
+
+        local.get $rz
+        local.get $fy
+
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+
+        local.get $rz
+        local.get $fx
+
+        f32.mul
+        
+        local.get $rx
+        local.get $fz
+
+        f32.mul
+        f32.sub
+
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+
+        local.get $rx
+        local.get $fy
+
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        f32.const 0.0
+        f32.store
+    )
+
     (func $transform_SXYZTi (;162+6jscalls;) (export "transform_SXYZTi") (param $dest i32) (param $sx f64) (param $sy f64) (param $sz f64) (param $ox f64) (param $oy f64) (param $oz f64) (param $tx f32) (param $ty f32) (param $tz f32)
         (local $a f64) (local $b f64) (local $c f64) (local $d f64) (local $e f64) (local $f f64)
         (local $t1 f64) (local $t2 f64)

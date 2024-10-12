@@ -384,6 +384,23 @@ type BufferModule = WebAssembly.Exports & {
     mat3_from_XZi(dest:mat3offset,angle_x:f64,angle_z:f64) : void;
     /** constructs a 3x3 rotation matrix from a given YZ-order rotation (in radians). */
     mat3_from_YZi(dest:mat3offset,angle_y:f64,angle_z:f64) : void;
+
+    /** constructs a billboard rotation matrix with fixed rotation around the x-axis.
+     * 
+     * for a group of particles, the reference position to be passed, can be any particle's position or the center of the particle cloud. */
+    billboard_around_X(dest:mat3offset,transform_position:vec3offset): void;
+    /** constructs a billboard rotation matrix with fixed rotation around the y-axis.
+     * 
+     * for a group of particles, the reference position to be passed, can be any particle's position or the center of the particle cloud. */
+    billboard_around_Y(dest:mat3offset,transform_position:vec3offset): void;
+    /** constructs a billboard rotation matrix with fixed rotation around the z-axis.
+     * 
+     * for a group of particles, the reference position to be passed, can be any particle's position or the center of the particle cloud. */
+    billboard_around_Z(dest:mat3offset,transform_position:vec3offset): void;
+    /** constructs a spherical billboard rotation matrix.
+     * 
+     * for a group of particles, the reference position to be passed, can be any particle's position or the center of the particle cloud. */
+    billboard_spherical(dest:mat3offset,transform_position:vec3offset): void;
     
     /** constructs a transform matrix from a given XYZ scale, XYZ-order rotation (in radians) and traslation. */
     transform_SXYZTi(dest:mat4offset,scale_x:f64,scale_y:f64,scale_z:f64,angle_x:f64,angle_y:f64,angle_z:f64,transform_x:f32,transform_y:f32,transform_z:f32): void;
@@ -426,11 +443,11 @@ type BufferModule = WebAssembly.Exports & {
     /** updates the translation encoded in the transform matrix. */
     transform_set_Ti(dest:mat4offset,transform_x:f32,transform_y:f32,transform_z:f32): void;
 
-    /** construct a normal matrix from a given transform matrix that only encodes rotation and translation.  */
+    /** constructs a normal matrix from a given transform matrix that only encodes rotation and translation.  */
     normal_from_transform_RT(dest:mat3offset,transform_matrix_RT:mat4offset): void;
-    /** construct a normal matrix from a given transform matrix that encodes scaling, rotation and translation. */
+    /** constructs a normal matrix from a given transform matrix that encodes scaling, rotation and translation. */
     normal_from_transform_SRTi(dest:mat3offset,transform_matrix_SRT:mat4offset,scale_x:f32,scale_y:f32,scale_z:f32): void;
-    /** construct a normal matrix from a given rotation matrix. */
+    /** constructs a normal matrix from a given rotation matrix. */
     normal_from_rotation(dest:mat3offset,rotation_matrix:mat3offset): void;
 
     //transform_USXYZT(dest:mat4offset,uniform_scale:f64,angle_x:f64,angle_y:f64,angle_z:f64,transform_x:f32,transform_y:f32,transform_z:f32): void;
