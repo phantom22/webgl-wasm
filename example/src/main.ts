@@ -35,11 +35,16 @@ let resized = false;
 
 function main() {
 
+    const { set_viewport, malloc_mat4, set_orthographic_camera,
+            view_orthographic, new_vec3, malloc_mat3, new_quat, 
+            malloc_quat, new_f32, set_camera_position, quat_from_XYZi, vec4_norm_ds,
+            mat4_identity, quat_prod, transform_apply_Q, normal_from_transform_RT } = b;
+
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    b.set_viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    set_viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.clearColor(0.0, 0.0, 0.0, 1.0)
     gl.enable(gl.DEPTH_TEST);
 
@@ -122,28 +127,29 @@ function main() {
     //////////////////////////
     // UNIFORM DATA
     //////////////////////////
-    const pVMi = b.malloc_mat4(),
-          viewProjMatrix = Wasm.mat4_get(pVMi);
+    const pVMi = malloc_mat4(),
+          viewProjMatrix = Wasm.mat4_get(pVMi),
+          ePi = new_vec3(2.5,3,0.3);
 
     const ar = gl.drawingBufferWidth / gl.drawingBufferHeight,
           left = -ar/2,
           right = -left,
           bottom = -1/ar,
           top = 1/ar;
-    b.set_orthographic_camera(
-        2.5, 3, 0.3, // camera position
-        0,   0,   0, // camera target
-        0,   1,   0, // camera up dir
+    set_orthographic_camera(
+        0, 0, 0, // camera position, for now don't set it
+        0, 0, 0, // camera target
+        0, 1, 0, // camera up dir
         left,right,bottom,top,
         -5, 5 // near plane, far plane 
     );
-    b.view_orthographic(pVMi);
+    set_camera_position(ePi);
+    view_orthographic(pVMi);
 
-    const ePi = b.new_vec3(2.5,3,0.3), // eye position index
-          eyePosition = Wasm.vec3_get(ePi),
-          lightPosition = Wasm.vec3_get(b.new_vec3(1,3,-2)),
-          tMi = b.malloc_mat4(), // transform matrix index
-          nMi = b.malloc_mat3(), // normal matrix index
+    const eyePosition = Wasm.vec3_get(ePi),
+          lightPosition = Wasm.vec3_get(new_vec3(1,3,-2)),
+          tMi = malloc_mat4(), // transform matrix index
+          nMi = malloc_mat3(), // normal matrix index
           transformMatrix = Wasm.mat4_get(tMi),
           normalMatrix = Wasm.mat3_get(nMi);
 
@@ -156,13 +162,13 @@ function main() {
     gl.bindBufferBase(gl.UNIFORM_BUFFER, 0, sceneUniformBuffer);
     gl.bufferData(gl.UNIFORM_BUFFER, sceneUniformData, gl.DYNAMIC_DRAW);
 
-    const q1 = b.new_quat(0,0,0,1),
-          q2 = b.malloc_quat(),
-          objectAngle = b.new_f64(0),
-          objectIncrement = b.new_f64(Math.PI/240);
+    const q1 = new_quat(0,0,0,1),
+          q2 = malloc_quat(),
+          objectAngle = new_f32(0),
+          objectIncrement = new_f32(Math.PI/240);
 
-    b.quat_from_XYZi(q2,-Math.PI/360,-Math.PI/300,-Math.PI/240);
-    b.vec4_norm_ds(q2);
+    quat_from_XYZi(q2,-Math.PI/360,-Math.PI/300,-Math.PI/240);
+    vec4_norm_ds(q2);
 
     const img = new Image(),
           images = Object.keys(MetalTexture) as ["albedo","normal","metallic","displacement","roughness"];
@@ -200,15 +206,19 @@ function main() {
         gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
         gl.uniform1i(texLocation, 0);
 
+        mat4_identity(tMi);
+
         function draw() {
             // apply rotation to sphere
-            b.quat_prod(q1,q1,q2);
-            b.vec4_norm_ds(q1);
+            quat_prod(q1,q1,q2);
+            vec4_norm_ds(q1);
             // update sphere transform matrix with new rotation and position
-            b.transform_QTi(tMi,q1,Math.cos(b.f64_incr(objectAngle,objectIncrement)) * 0.3,0,Math.sin(b.f64_get(objectAngle)) * 0.3);
+            //transform_QTi(tMi,q1,Math.cos(f32_incr(objectAngle,objectIncrement)) * 0.3,0,Math.sin(f32_get(objectAngle)) * 0.3);
+            
+            transform_apply_Q(tMi, q1);
             gl.uniformMatrix4fv(modelMatrixLocation, false, transformMatrix);
             // calculate normal matrix from transform matrix
-            b.normal_from_transform_RT(nMi, tMi);
+            normal_from_transform_RT(nMi, tMi);
             gl.uniformMatrix3fv(normalMatrixLocation, false, normalMatrix);
 
             if (resized) {

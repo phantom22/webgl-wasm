@@ -115,16 +115,6 @@ Wasm.import = <A extends WebAssembly.Exports,B>(moduleName:string,binaries:strin
             );
     });
 }
-
-Wasm.encodeStringToUint32Array = (str:string,targetLength:number,toWATInstructions:boolean) => {
-	const paddedStr = str.padEnd(targetLength," ");
-	if (paddedStr.length !== targetLength)
-		throw new Error(`the passed string must be of length ${targetLength}!`);
-	const encoder = new TextEncoder(),
-          uint8array = encoder.encode(paddedStr),
-          uint32array = new Uint32Array(uint8array.buffer);
-	return toWATInstructions ? `;; "${str}"\n`+Array.from(uint32array).map(v => "i32.const 0x"+v.toString(16).toUpperCase()).join("\n") : uint32array
-}
 Wasm.log_16char_string_from_i32x4 = (a:number,b:number,c:number,d:number) => {
 	const uint32array = new Uint32Array([a,b,c,d]),
           uint8array = new Uint8Array(uint32array.buffer),
@@ -226,12 +216,17 @@ Wasm.log_vec4 = (x:number,y:number,z:number,w:number) => {
     console.log(`vec4 { x:${_[0]}, y:${_[1]}, z:${_[2]}, w:${_[3]} }`);
 }
 Wasm.log_mat3 = (a:number,b:number,c:number,d:number,e:number,f:number,g:number,h:number,i:number) => {
-    const _ = Wasm.format_numbers(_no_padding,a,b,c,d,e,f,g,h,i);
-    console.log(`mat3 {\n  ${_[0]}, ${_[3]}, ${_[6]},\n  ${_[1]}, ${_[4]}, ${_[7]},\n  ${_[2]}, ${_[5]}, ${_[8]}\n}`)
+    const c1 = Wasm.format_numbers(_no_padding,a,b,c),
+          c2 = Wasm.format_numbers(_no_padding,d,e,f),
+          c3 = Wasm.format_numbers(_no_padding,g,h,i);
+    console.log(`mat3 {\n  ${c1[0]}, ${c2[0]}, ${c3[0]},\n  ${c1[1]}, ${c2[1]}, ${c3[1]},\n  ${c1[2]}, ${c2[2]}, ${c3[2]}\n}`)
 }
 Wasm.log_mat4 = (a:number,b:number,c:number,d:number,e:number,f:number,g:number,h:number,i:number,j:number,k:number,l:number,m:number,n:number,o:number,p:number) => {
-    const _ = Wasm.format_numbers(_no_padding,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p);
-    console.log(`mat4 {\n  ${_[0]}, ${_[4]}, ${_[8]}, ${_[12]},\n  ${_[1]}, ${_[5]}, ${_[9]}, ${_[13]},\n  ${_[2]}, ${_[6]}, ${_[10]}, ${_[14]},\n  ${_[3]}, ${_[7]}, ${_[11]}, ${_[15]}\n}`)
+    const c1 = Wasm.format_numbers(_no_padding,a,b,c,d),
+          c2 = Wasm.format_numbers(_no_padding,e,f,g,h),
+          c3 = Wasm.format_numbers(_no_padding,i,j,k,l),
+          c4 = Wasm.format_numbers(_no_padding,m,n,o,p);
+    console.log(`mat4 {\n  ${c1[0]}, ${c2[0]}, ${c3[0]}, ${c4[0]},\n  ${c1[1]}, ${c2[1]}, ${c3[1]}, ${c4[1]},\n  ${c1[2]}, ${c2[2]}, ${c3[2]}, ${c4[2]},\n  ${c1[3]}, ${c2[3]}, ${c3[3]}, ${c4[3]}\n}`)
 }
 Wasm.log_quat = (x:number,y:number,z:number,w:number) => {
     const _ = Wasm.format_numbers(true,x,y,z,w);

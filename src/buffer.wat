@@ -26,7 +26,7 @@
     ;;(import "Wasm" "log_i32_array" (func $log_i32_array (param i32 i32)))
     (import "Wasm" "log_number" (func $_log_i32 (param i32)))
     (import "Wasm" "log_number" (func $_log_f32 (param f32)))
-    (import "Wasm" "log_number" (func $_log_f64 (param f64)))
+    ;; (import "Wasm" "log_number" (func $_log_f64 (param f64)))
     (import "Wasm" "log_vec2" (func $_log_vec2 (param f32 f32)))
     (import "Wasm" "log_vec3" (func $_log_vec3 (param f32 f32 f32)))
     (import "Wasm" "log_vec4" (func $_log_vec4 (param f32 f32 f32 f32)))
@@ -43,7 +43,7 @@
     
     (global (export "SIZEOF_I32") i32 (i32.const 4))    
     (global (export "SIZEOF_F32") i32 (i32.const 4))
-    (global (export "SIZEOF_F64") i32 (i32.const 8))
+    ;; (global (export "SIZEOF_F64") i32 (i32.const 8))
     (global (export "SIZEOF_VEC2") i32 (i32.const 8))
     (global (export "SIZEOF_VEC3") i32 (i32.const 12))
     (global (export "SIZEOF_VEC4") i32 (i32.const 16))
@@ -63,11 +63,11 @@
         call $_log_f32
     )
 
-    (func $f64_log (;2+jscall;) (export "f64_log") (param $from i32)
-        local.get $from
-        f64.load
-        call $_log_f64
-    )
+    ;; (func $f64_log (;2+jscall;) (export "f64_log") (param $from i32)
+    ;;     local.get $from
+    ;;     f64.load
+    ;;     call $_log_f64
+    ;; )
 
     (func $vec2_log (;6+jscall;) (export "vec2_log") (param $from i32)
         local.get $from
@@ -245,7 +245,7 @@
     ;; needed in the specific case where the free_blocks_list length is 0.
     (global $max_block_size (export "max_block_size") (mut i32) (i32.const 0))
 
-    ;;(global $f64_eq_tolerance (export "f64_eq_tolerance") (mut f64) (f64.const 1e-7))
+    ;;(global $f64_eq_tolerance (export "f64_eq_tolerance") (mut f64) (f64.const 1e-6))
     (global $f32_eq_tolerance (export "f32_eq_tolerance") (mut f32) (f32.const 1e-7))
 
     ;;(func $log_fb_array (;4+jscall;) (export "log_free_blocks_array")
@@ -357,7 +357,7 @@
 
     (start $init)
 
-    (func $malloc (;127;) (export "malloc") (param $size i32) (result i32)
+    (func $malloc (;124;) (export "malloc") (param $size i32) (result i32)
         (local $i i32) (local $block_size_offset i32) (local $block_size i32)
         (local $block_offset i32) (local $block_offset_offset i32) (local $eq_block_size i32)
 
@@ -391,24 +391,6 @@
         i32.eqz
         ;; if free_blocks_length == 0, fail
         if
-            ;; "malloc() failed: insufficient memory avaiable."
-            ;; i32.const 0x6C6C616D
-            ;; i32.const 0x2928636F
-            ;; i32.const 0x69616620
-            ;; i32.const 0x3A64656C
-            ;; i32.const 0x736E6920
-            ;; i32.const 0x69666675
-            ;; i32.const 0x6E656963
-            ;; i32.const 0x656D2074
-            ;; i32.const 0x79726F6D
-            ;; i32.const 0x61766120
-            ;; i32.const 0x6C626169
-            ;; i32.const 0x20202E65
-            ;; i32.const 0x20202020
-            ;; i32.const 0x20202020
-            ;; i32.const 0x20202020
-            ;; i32.const 0x20202020
-            ;; call $warn_64ch_i32x16
             i32.const -1
             return
         end
@@ -475,24 +457,6 @@
                 i32.eqz
                 ;; traversed the entire free_blocks_list, nothing found, fail
                 if
-                    ;; "malloc() failed: insufficient memory avaiable."
-                    ;; i32.const 0x6C6C616D
-                    ;; i32.const 0x2928636F
-                    ;; i32.const 0x69616620
-                    ;; i32.const 0x3A64656C
-                    ;; i32.const 0x736E6920
-                    ;; i32.const 0x69666675
-                    ;; i32.const 0x6E656963
-                    ;; i32.const 0x656D2074
-                    ;; i32.const 0x79726F6D
-                    ;; i32.const 0x61766120
-                    ;; i32.const 0x6C626169
-                    ;; i32.const 0x20202E65
-                    ;; i32.const 0x20202020
-                    ;; i32.const 0x20202020
-                    ;; i32.const 0x20202020
-                    ;; i32.const 0x20202020
-                    ;; call $warn_64ch_i32x16
                     i32.const -1
                     return
                 end
@@ -586,55 +550,360 @@
         local.get $block_offset
     )
 
+    (func $malloc_aligned (;202;) (export "malloc_aligned") (param $size i32) (param $byte_alignment i32) (result i32)
+        (local $i i32) (local $block_size_offset i32) (local $block_align_adjustment i32) (local $block_size i32)
+        (local $block_offset i32) (local $block_offset_offset i32) (local $eq_block_size i32)
+
+        local.get $size
+        i32.const 1
+        i32.lt_s
+        if
+            ;; "malloc_aligned(): the block size must be positive."
+            i32.const 0x6C6C616D
+            i32.const 0x775F636F
+            i32.const 0x5F687469
+            i32.const 0x67696C61
+            i32.const 0x6E656D6E
+            i32.const 0x3A292874
+            i32.const 0x65687420
+            i32.const 0x6F6C6220
+            i32.const 0x73206B63
+            i32.const 0x20657A69
+            i32.const 0x7473756D
+            i32.const 0x20656220
+            i32.const 0x69736F70
+            i32.const 0x65766974
+            i32.const 0x2020202E
+            i32.const 0x20202020
+            call $throw_64ch_i32x16
+        end
+
+        local.get $byte_alignment
+        i32.const 1
+        i32.lt_s
+        if
+            ;; "malloc_aligned(): byte alignment must be positive."
+            i32.const 0x6C6C616D
+            i32.const 0x775F636F
+            i32.const 0x5F687469
+            i32.const 0x67696C61
+            i32.const 0x6E656D6E
+            i32.const 0x3A292874
+            i32.const 0x74796220
+            i32.const 0x6C612065
+            i32.const 0x6D6E6769
+            i32.const 0x20746E65
+            i32.const 0x7473756D
+            i32.const 0x20656220
+            i32.const 0x69736F70
+            i32.const 0x65766974
+            i32.const 0x2020202E
+            i32.const 0x20202020
+            call $throw_64ch_i32x16
+        end
+
+        ;; i = free_blocks.length
+        global.get $fb_list_length
+        local.tee $i
+        i32.eqz
+        ;; if free_blocks_length == 0, fail
+        if
+            i32.const -1
+            return
+        end
+
+        ;; block_size_offset = fb_list_offset + 4
+        global.get $fb_list_offset
+        i32.const 4
+        i32.add
+        local.set $block_size_offset
+
+        ;; i = fb.list_length
+        ;; block_size_offset = first from the list
+        ;; while i > 0
+        ;; if block_size == size && block_align_adjustment == 0
+        ;;     break
+        ;; if size < block_size - block_align_adjustment
+        ;;     break
+        ;; offset += 8
+        ;; i--
+        ;; if i == 0
+        ;;     return -1
+        ;; 
+        (block $get_block
+            (loop $get_block_loop
+                local.get $block_size_offset
+                i32.const 4
+                i32.sub
+                local.tee $block_offset_offset
+                i32.load ;; block_offset value
+                local.tee $block_offset
+                local.get $byte_alignment
+                i32.rem_s
+
+                local.tee $block_align_adjustment
+                i32.eqz
+                ;; block_size
+                local.get $block_size_offset
+                i32.load
+                local.tee $block_size
+                local.get $size
+                i32.eq
+                i32.and
+                ;; wanted_size == block_size && block_align_adjustment == 0
+                local.tee $eq_block_size
+                if
+                    ;; i = number of blocks traversed
+                    global.get $fb_list_length
+                    local.get $i
+                    i32.sub
+                    local.set $i
+                    ;; decrement length of fb_list
+                    global.get $fb_list_length
+                    i32.const 1
+                    i32.sub
+                    global.set $fb_list_length
+                    ;; update free_blocks_list_offset, by incrementing it (shrinking the list)
+                    global.get $fb_list_offset
+                    i32.const 8
+                    i32.add
+                    global.set $fb_list_offset
+                    br $get_block
+                end
+
+                ;; size < block - block_align_adjustment
+                local.get $size
+                local.get $block_size
+                local.get $block_align_adjustment
+                i32.sub
+                i32.lt_u
+                if
+                    local.get $byte_alignment
+                    local.get $block_align_adjustment
+                    i32.sub
+                    local.set $block_align_adjustment
+                    br $get_block
+                end
+
+                local.get $i
+                i32.const 1
+                i32.sub
+                local.tee $i
+                i32.eqz
+                ;; traversed the entire free_blocks_list, nothing found, fail
+                if
+                    i32.const -1
+                    return
+                end
+
+                local.get $block_size_offset
+                i32.const 8
+                i32.add
+                local.set $block_size_offset
+
+                br $get_block_loop
+            )
+        )
+
+        local.get $block_align_adjustment
+        local.get $byte_alignment
+        i32.eq
+        local.get $eq_block_size
+        i32.or
+        ;; if no alignment required, which is given by the following formula
+        ;;      eq_block_size || byte_alignment - (offset % byte_alignment) == byte_alignment
+        ;; (new) block_offset = block_offset + size
+        ;; (new) block_size = block_size - size
+        if
+            local.get $block_offset_offset
+            local.get $block_offset
+            local.get $size
+            i32.add
+            i32.store
+            
+            local.get $block_size_offset
+            local.get $block_size
+            local.get $size
+            i32.sub
+            local.tee $eq_block_size
+            i32.store
+
+            local.get $eq_block_size
+            i32.eqz
+            local.set $eq_block_size
+
+            
+        ;; else, if alignment is needed
+        ;; (new) block_offset = (old) block_offset
+        ;; (new) block_size = block_align_adjustment
+        ;;
+        ;; (added) block_offset = block_offset + block_align_adjustment + size
+        ;; (added) block_size = block_size - (block_align_adjustment + size)
+        ;;
+        ;; put the (old) block data as the first entry (shift by one) so that
+        ;; the smallest block is the first in the list.
+        else
+            global.get $fb_list_offset
+            i32.const 8
+            i32.sub
+            global.set $fb_list_offset
+
+            global.get $fb_list_offset
+            local.get $block_offset
+            i32.store
+
+            global.get $fb_list_offset
+            i32.const 4
+            i32.add
+            local.get $block_align_adjustment
+            i32.store
+
+            local.get $block_offset_offset
+            local.get $block_offset
+            local.get $block_align_adjustment
+            i32.add
+            local.get $size
+            i32.add
+            i32.store
+
+            local.get $block_size_offset
+            local.get $block_size
+            local.get $size
+            local.get $block_align_adjustment
+            i32.add
+            i32.sub
+            i32.store
+
+            global.get $fb_list_length
+            i32.const 1
+            i32.add
+            global.set $fb_list_length
+
+            local.get $block_offset
+            local.get $block_align_adjustment
+            i32.add
+            return
+        end
+
+        global.get $fb_list_length
+        i32.eqz
+        local.get $eq_block_size
+        i32.eqz
+        i32.or
+        ;; if fb_list_length == 0 || !eq_block_size, no need for shifting the list
+        if
+            ;; call $log_fb_array
+            local.get $block_offset
+            return
+        end
+        ;; eq_block_size is true
+        
+        local.get $i
+        i32.eqz
+        ;; entries to be removed from the list are exactly at the list start
+        if
+            ;; erase leftmost block data, to prevent undefined behaviour
+            ;; only need to reset block offset since size was already updated to 0
+            local.get $block_offset_offset
+            i32.const 0
+            i32.store
+        else
+            ;; i = number of blocks that were traversed before finding the suitable one
+            (loop $shift_fb_list_one_right
+                ;; memory[block_offset_offset] = memory[block_offset_offset-8]
+                ;; block_offset_offset = block_offset_offset - 8
+                local.get $block_offset_offset
+                local.get $block_offset_offset
+                i32.const 8
+                i32.sub
+                local.tee $block_offset_offset
+                i32.load
+                i32.store
+                ;; memory[block_size_offset] = memory[block_size_offset-8]
+                ;; block_size_offset = block_size_offset - 8
+                local.get $block_size_offset
+                local.get $block_size_offset
+                i32.const 8
+                i32.sub
+                local.tee $block_size_offset
+                i32.load
+                i32.store
+
+                ;; decrement i
+                local.get $i
+                i32.const 1
+                i32.sub
+                ;; if i > 0, continue loop
+                local.tee $i
+                i32.const 0
+                i32.gt_u
+                br_if $shift_fb_list_one_right
+            )
+        end
+
+        ;; call $log_fb_array
+
+        local.get $block_offset
+    )
+
     (func $malloc_i32 (;128+call;) (export "malloc_i32") (result i32)
         i32.const 4
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
     )
 
     (func $malloc_f32 (;128+call;) (export "malloc_f32") (result i32)
         i32.const 4
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
     )
 
-    (func $malloc_f64 (;128+call;) (export "malloc_f64") (result i32)
-        i32.const 8
-        call $malloc
-    )
+    ;; (func $malloc_f64 (;128+call;) (export "malloc_f64") (result i32)
+    ;;     i32.const 8
+    ;;     call $malloc
+    ;; )
 
     (func $malloc_vec2 (;128+call;) (export "malloc_vec2") (result i32)
         i32.const 8
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
     )
 
     (func $malloc_vec3 (;128+call;) (export "malloc_vec3") (result i32)
         i32.const 12
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
     )
 
     (func $malloc_vec4 (;128+call;) (export "malloc_vec4") (result i32)
         i32.const 16
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
     )
 
     (func $malloc_mat3 (;128+call;) (export "malloc_mat3") (result i32)
         i32.const 36
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
     )
 
     (func $malloc_mat4 (;128+call;) (export "malloc_mat4") (result i32)
         i32.const 64
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
     )
 
     (func $malloc_quat (;128+call;) (export "malloc_quat") (result i32)
         i32.const 16
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
     )
 
     (func $new_i32 (;139+call;) (export "new_i32") (param i32) (result i32)
         (local $dest i32)
         i32.const 4
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
         local.tee $dest
         i32.const -1
         i32.eq
@@ -651,7 +920,8 @@
     (func $new_f32 (;139+call;) (export "new_f32") (param f32) (result i32)
         (local $dest i32)
         i32.const 4
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
         local.tee $dest
         i32.const -1
         i32.eq
@@ -665,27 +935,28 @@
         local.get $dest
     )
 
-    (func $new_f64 (;139+call;) (export "new_f64") (param f64) (result i32)
-        (local $dest i32)
-        i32.const 8
-        call $malloc
-        local.tee $dest
-        i32.const -1
-        i32.eq
-        if
-            i32.const -1
-            return
-        end
-        local.get $dest
-        local.get 0
-        f64.store
-        local.get $dest
-    )
+    ;; (func $new_f64 (;139+call;) (export "new_f64") (param f64) (result i32)
+    ;;     (local $dest i32)
+    ;;     i32.const 8
+    ;;     call $malloc
+    ;;     local.tee $dest
+    ;;     i32.const -1
+    ;;     i32.eq
+    ;;     if
+    ;;         i32.const -1
+    ;;         return
+    ;;     end
+    ;;     local.get $dest
+    ;;     local.get 0
+    ;;     f64.store
+    ;;     local.get $dest
+    ;; )
 
     (func $new_vec2 (;143+call;) (export "new_vec2") (param f32 f32) (result i32)
         (local $dest i32)
         i32.const 8
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
         local.tee $dest
         i32.const -1
         i32.eq
@@ -710,7 +981,8 @@
     (func $new_vec3 (;148+call;) (export "new_vec3") (param f32 f32 f32) (result i32)
         (local $dest i32)
         i32.const 12
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
         local.tee $dest
         i32.const -1
         i32.eq
@@ -741,7 +1013,8 @@
     (func $new_vec4 (;153+call;) (export "new_vec4") (param f32 f32 f32 f32) (result i32)
         (local $dest i32)
         i32.const 12
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
         local.tee $dest
         i32.const -1
         i32.eq
@@ -778,7 +1051,8 @@
     (func $new_mat3 (;178+call;) (export "new_mat3") (param f32 f32 f32 f32 f32 f32 f32 f32 f32) (result i32)
         (local $dest i32)
         i32.const 36
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
         local.tee $dest
         i32.const -1
         i32.eq
@@ -845,7 +1119,8 @@
     (func $new_mat4 (;213+call;) (export "new_mat4") (param f32 f32 f32 f32 f32 f32 f32 f32 f32 f32 f32 f32 f32 f32 f32 f32) (result i32)
         (local $dest i32)
         i32.const 64
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
         local.tee $dest
         i32.const -1
         i32.eq
@@ -954,7 +1229,8 @@
     (func $new_quat (;153+call;) (export "new_quat") (param $x f32) (param $y f32) (param $z f32) (param $w f32) (result i32)
         (local $dest i32)
         i32.const 16
-        call $malloc
+        i32.const 4
+        call $malloc_aligned
         local.tee $dest
         i32.const -1
         i32.eq
@@ -1426,30 +1702,285 @@
         call $free
     )
 
-    (func (export "x") (param $from i32) (result f32)
+    (func (export "get_x") (param $from i32) (result i32)
         local.get $from
-        f32.load
     )
 
-    (func (export "y") (param $from i32) (result f32)
+    (func (export "get_y") (param $from i32) (result i32)
+        local.get $from
+        i32.const 4
+        i32.add
+    )
+
+    (func (export "get_z") (param $from i32) (result i32)
+        local.get $from
+        i32.const 8
+        i32.add
+    )
+
+    (func (export "get_w") (param $from i32) (result i32)
+        local.get $from
+        i32.const 12
+        i32.add
+    )
+
+    (func (export "mat3_get_col1") (param $from i32) (result i32)
+        local.get $from
+    )
+
+    (func (export "mat3_get_col2") (param $from i32) (result i32)
+        local.get $from
+        i32.const 12
+        i32.add
+    )
+
+    (func (export "mat3_get_col3") (param $from i32) (result i32)
+        local.get $from
+        i32.const 24
+        i32.add
+    )
+
+    (func (export "mat4_get_col1") (param $from i32) (result i32)
+        local.get $from
+    )
+
+    (func (export "mat4_get_col2") (param $from i32) (result i32)
+        local.get $from
+        i32.const 16
+        i32.add
+    )
+
+    (func (export "mat4_get_col3") (param $from i32) (result i32)
+        local.get $from
+        i32.const 32
+        i32.add
+    )
+
+    (func (export "mat4_get_col4") (param $from i32) (result i32)
+        local.get $from
+        i32.const 48
+        i32.add
+    )
+
+    (func (export "mat3_set_col1") (param $dest i32) (param $from i32)
+        local.get $dest
+        local.get $from
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
         local.get $from
         i32.const 4
         i32.add
         f32.load
-    )
+        f32.store
 
-    (func (export "z") (param $from i32) (result f32)
+        local.get $dest
+        i32.const 8
+        i32.add
         local.get $from
         i32.const 8
         i32.add
         f32.load
+        f32.store
     )
 
-    (func (export "w") (param $from i32) (result f32)
+    (func (export "mat3_set_col2") (param $dest i32) (param $from i32)
+        local.get $dest
+        i32.const 12
+        i32.add
+        local.get $from
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        local.get $from
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $from
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+    )
+
+    (func (export "mat3_set_col3") (param $dest i32) (param $from i32)
+        local.get $dest
+        i32.const 24
+        i32.add
+        local.get $from
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+        local.get $from
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        local.get $from
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+    )
+
+    (func (export "mat4_set_col1") (param $dest i32) (param $from i32)
+        local.get $dest
+        local.get $from
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $from
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $from
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 12
+        i32.add
         local.get $from
         i32.const 12
         i32.add
         f32.load
+        f32.store
+    )
+
+    (func (export "mat4_set_col2") (param $dest i32) (param $from i32)
+        local.get $dest
+        i32.const 16
+        i32.add
+        local.get $from
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $from
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        local.get $from
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+        local.get $from
+        i32.const 12
+        i32.add
+        f32.load
+        f32.store
+    )
+
+    (func (export "mat4_set_col3") (param $dest i32) (param $from i32)
+        local.get $dest
+        i32.const 32
+        i32.add
+        local.get $from
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+        local.get $from
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 40
+        i32.add
+        local.get $from
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 44
+        i32.add
+        local.get $from
+        i32.const 12
+        i32.add
+        f32.load
+        f32.store
+    )
+
+    (func (export "mat4_set_col4") (param $dest i32) (param $from i32)
+        local.get $dest
+        i32.const 48
+        i32.add
+        local.get $from
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 52
+        i32.add
+        local.get $from
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 56
+        i32.add
+        local.get $from
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 60
+        i32.add
+        local.get $from
+        i32.const 12
+        i32.add
+        f32.load
+        f32.store
     )
 
     (func $i32_get (;2;) (export "i32_get") (param $from i32) (result i32)
@@ -1538,48 +2069,48 @@
         local.get $t
     )
 
-    (func $f64_get (;2;) (export "f64_get") (param $from i32) (result f64)
-        local.get $from
-        f64.load
-    )
+    ;; (func $f64_get (;2;) (export "f64_get") (param $from i32) (result f64)
+    ;;     local.get $from
+    ;;     f64.load
+    ;; )
 
-    (func $f64_set (;4;) (export "f64_set") (param $dest i32) (param $from i32)
-        local.get $dest
-        local.get $from
-        f64.load
-        f64.store
-    )
+    ;; (func $f64_set (;4;) (export "f64_set") (param $dest i32) (param $from i32)
+    ;;     local.get $dest
+    ;;     local.get $from
+    ;;     f64.load
+    ;;     f64.store
+    ;; )
 
-    (func $f64_seti (;3;) (export "f64_seti") (param $dest i32) (param $val f64)
-        local.get $dest
-        local.get $val
-        f64.store
-    )
+    ;; (func $f64_seti (;3;) (export "f64_seti") (param $dest i32) (param $val f64)
+    ;;     local.get $dest
+    ;;     local.get $val
+    ;;     f64.store
+    ;; )
 
-    (func $f64_incr (;9;) (export "f64_incr") (param $dest i32) (param $from i32) (result f64)
-        (local $t f64)
-        local.get $dest
-        local.get $dest
-        f64.load
-        local.get $from
-        f64.load
-        f64.add
-        local.tee $t
-        f64.store
-        local.get $t
-    )
+    ;; (func $f64_incr (;9;) (export "f64_incr") (param $dest i32) (param $from i32) (result f64)
+    ;;     (local $t f64)
+    ;;     local.get $dest
+    ;;     local.get $dest
+    ;;     f64.load
+    ;;     local.get $from
+    ;;     f64.load
+    ;;     f64.add
+    ;;     local.tee $t
+    ;;     f64.store
+    ;;     local.get $t
+    ;; )
 
-    (func $f64_incri (;8;) (export "f64_incri") (param $dest i32) (param $incr f64) (result f64)
-        (local $t f64)
-        local.get $dest
-        local.get $dest
-        f64.load
-        local.get $incr
-        f64.add
-        local.tee $t
-        f64.store
-        local.get $t
-    )
+    ;; (func $f64_incri (;8;) (export "f64_incri") (param $dest i32) (param $incr f64) (result f64)
+    ;;     (local $t f64)
+    ;;     local.get $dest
+    ;;     local.get $dest
+    ;;     f64.load
+    ;;     local.get $incr
+    ;;     f64.add
+    ;;     local.tee $t
+    ;;     f64.store
+    ;;     local.get $t
+    ;; )
 
     (func $vec2_set (;12;) (export "vec2_set") (param $dest i32) (param $from i32)
         local.get $dest
@@ -1867,6 +2398,69 @@
         i32.const 8
         i32.add
         f32.const 1.0
+        f32.store
+    )
+
+    (func $vec3_camera_position (export "vec3_camera_position") (param $dest i32)
+        local.get $dest
+        global.get $ex
+        f32.demote_f64
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        global.get $ey
+        f32.demote_f64
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        global.get $ez
+        f32.demote_f64
+        f32.store
+    )
+
+    (func $vec3_camera_target (export "vec3_camera_target") (param $dest i32)
+        local.get $dest
+        global.get $cx
+        f32.demote_f64
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        global.get $cy
+        f32.demote_f64
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        global.get $cz
+        f32.demote_f64
+        f32.store
+    )
+
+    (func $vec3_camera_up_dir (export "vec3_camera_up_dir") (param $dest i32)
+        local.get $dest
+        global.get $ux
+        f32.demote_f64
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        global.get $uy
+        f32.demote_f64
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        global.get $uz
+        f32.demote_f64
         f32.store
     )
 
@@ -2741,6 +3335,87 @@
         f32.store
     )
 
+    (func $vec2_neg (export "vec2_neg") (param $dest i32) (param $from i32)
+        (local $t i32)
+        local.get $dest
+        local.get $dest
+        f32.load
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.tee $t
+        local.get $t
+        f32.load
+        f32.neg
+        f32.store
+    )
+
+    (func $vec3_neg (export "vec3_neg") (param $dest i32) (param $from i32)
+        (local $t i32)
+        local.get $dest
+        local.get $dest
+        f32.load
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.tee $t
+        local.get $t
+        f32.load
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.tee $t
+        local.get $t
+        f32.load
+        f32.neg
+        f32.store
+    )
+
+    (func $vec4_neg (export "vec4_neg") (param $dest i32) (param $from i32)
+        (local $t i32)
+        local.get $dest
+        local.get $dest
+        f32.load
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.tee $t
+        local.get $t
+        f32.load
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.tee $t
+        local.get $t
+        f32.load
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 12
+        i32.add
+        local.tee $t
+        local.get $t
+        f32.load
+        f32.neg
+        f32.store
+    )
+
     (func $vec2_add (;20;) (export "vec2_add") (param $dest i32) (param $from_a i32) (param $from_b i32)
         ;; r.x = a.x + b.x
         local.get $dest
@@ -2854,6 +3529,111 @@
         i32.const 12
         i32.add
         f32.load
+        f32.add
+        f32.store
+    )
+
+    (func $vec2_add_scalar (;18;) (export "vec2_add_scalar") (param $dest i32) (param $from i32) (param $scalar i32)
+        (local $t f32)
+        ;; r.x = a.x + scalar
+        local.get $dest
+        local.get $from
+        f32.load
+        local.get $scalar
+        f32.load
+        local.tee $t
+        f32.add
+        f32.store
+        ;; r.y = a.y + scalar
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $from
+        i32.const 4
+        i32.add
+        f32.load
+        local.get $t
+        f32.add
+        f32.store
+    )
+
+    (func $vec3_add_scalar (;28;) (export "vec3_add_scalar") (param $dest i32) (param $from i32) (param $scalar i32)
+        (local $t f32)
+        ;; r.x = a.x + scalar
+        local.get $dest
+        local.get $from
+        f32.load
+        local.get $scalar
+        f32.load
+        local.tee $t
+        f32.add
+        f32.store
+        ;; r.y = a.y + scalar
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $from
+        i32.const 4
+        i32.add
+        f32.load
+        local.get $t
+        f32.add
+        f32.store
+        ;; r.z = a.z + scalar
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $from
+        i32.const 8
+        i32.add
+        f32.load
+        local.get $t
+        f32.add
+        f32.store
+    )
+
+    (func $vec4_add_scalar (;38;) (export "vec4_add_scalar") (param $dest i32) (param $from i32) (param $scalar i32)
+        (local $t f32)
+        ;; r.x = a.x + scalar
+        local.get $dest
+        local.get $from
+        f32.load
+        local.get $scalar
+        f32.load
+        local.tee $t
+        f32.add
+        f32.store
+        ;; r.y = a.y + scalar
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $from
+        i32.const 4
+        i32.add
+        f32.load
+        local.get $t
+        f32.add
+        f32.store
+        ;; r.z = a.z + scalar
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $from
+        i32.const 8
+        i32.add
+        f32.load
+        local.get $t
+        f32.add
+        f32.store
+        ;; r.w = a.w + scalar
+        local.get $dest
+        i32.const 12
+        i32.add
+        local.get $from
+        i32.const 12
+        i32.add
+        f32.load
+        local.get $t
         f32.add
         f32.store
     )
@@ -2972,6 +3752,210 @@
         i32.add
         f32.load
         f32.sub
+        f32.store
+    )
+
+    (func $vec2_sub_norm (;38;) (export "vec2_sub_norm") (param $dest i32) (param $from_a i32) (param $from_b i32)
+        (local $x f32) (local $y f32) (local $t f32)
+
+        local.get $from_a
+        f32.load
+        local.get $from_b
+        f32.load
+        f32.sub
+        local.tee $x
+        local.get $x
+        f32.mul
+
+        local.get $from_a
+        i32.const 4
+        i32.add
+        f32.load
+        local.get $from_b
+        i32.const 4
+        i32.add
+        f32.load
+        f32.sub
+        local.tee $y
+        local.get $y
+        f32.mul
+        f32.add
+        f32.sqrt
+        local.set $t
+
+        local.get $dest
+        f32.const 1.0
+        local.get $t
+        f32.div
+        local.tee $t
+        local.get $x
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $t
+        local.get $y
+        f32.mul
+        f32.store
+    )
+
+    (func $vec3_sub_norm (;58;) (export "vec3_sub_norm") (param $dest i32) (param $from_a i32) (param $from_b i32)
+        (local $x f32) (local $y f32) (local $z f32) (local $t f32)
+
+        local.get $from_a
+        f32.load
+        local.get $from_b
+        f32.load
+        f32.sub
+        local.tee $x
+        local.get $x
+        f32.mul
+
+        local.get $from_a
+        i32.const 4
+        i32.add
+        f32.load
+        local.get $from_b
+        i32.const 4
+        i32.add
+        f32.load
+        f32.sub
+        local.tee $y
+        local.get $y
+        f32.mul
+        f32.add
+
+        local.get $from_a
+        i32.const 8
+        i32.add
+        f32.load
+        local.get $from_b
+        i32.const 8
+        i32.add
+        f32.load
+        f32.sub
+        local.tee $z
+        local.get $z
+        f32.mul
+        f32.add
+        f32.sqrt
+        local.set $t
+
+        local.get $dest
+        f32.const 1.0
+        local.get $t
+        f32.div
+        local.tee $t
+        local.get $x
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $t
+        local.get $y
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $t
+        local.get $z
+        f32.mul
+        f32.store
+    )
+
+    (func $vec4_sub_norm (;78;) (export "vec4_sub_norm") (param $dest i32) (param $from_a i32) (param $from_b i32)
+        (local $x f32) (local $y f32) (local $z f32) (local $w f32) (local $t f32)
+
+        local.get $from_a
+        f32.load
+        local.get $from_b
+        f32.load
+        f32.sub
+        local.tee $x
+        local.get $x
+        f32.mul
+
+        local.get $from_a
+        i32.const 4
+        i32.add
+        f32.load
+        local.get $from_b
+        i32.const 4
+        i32.add
+        f32.load
+        f32.sub
+        local.tee $y
+        local.get $y
+        f32.mul
+        f32.add
+
+        local.get $from_a
+        i32.const 8
+        i32.add
+        f32.load
+        local.get $from_b
+        i32.const 8
+        i32.add
+        f32.load
+        f32.sub
+        local.tee $z
+        local.get $z
+        f32.mul
+        f32.add
+
+        local.get $from_a
+        i32.const 12
+        i32.add
+        f32.load
+        local.get $from_b
+        i32.const 12
+        i32.add
+        f32.load
+        f32.sub
+        local.tee $w
+        local.get $w
+        f32.mul
+        f32.add
+        f32.sqrt
+        local.set $t
+
+        local.get $dest
+        f32.const 1.0
+        local.get $t
+        f32.div
+        local.tee $t
+        local.get $x
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $t
+        local.get $y
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $t
+        local.get $z
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 12
+        i32.add
+        local.get $t
+        local.get $w
+        f32.mul
         f32.store
     )
 
@@ -4681,6 +5665,113 @@
         f32.mul
         f32.sub
 
+        f32.store
+    )
+
+    (func $vec3_cross_norm (;51;) (export "vec3_cross_norm") (param $dest i32) (param $from_a i32) (param $from_b i32)
+        (local $a f32) (local $b f32) (local $c f32)
+        (local $d f32) (local $e f32) (local $f f32)
+        (local $x f32) (local $y f32) (local $z f32) (local $t f32)
+
+        local.get $from_a
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $b
+
+        local.get $from_b
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $f
+
+        f32.mul
+
+        local.get $from_a
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $c
+
+        local.get $from_b
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $e
+
+        f32.mul
+        f32.sub
+
+        local.tee $x
+        local.get $x
+
+        f32.mul
+
+        local.get $from_b
+        f32.load
+        local.tee $d
+
+        local.get $c
+
+        f32.mul
+
+        local.get $from_a
+        f32.load
+        local.tee $a
+
+        local.get $f
+
+        f32.mul
+        f32.sub
+
+        local.tee $y
+        local.get $y
+
+        f32.mul
+        f32.add
+
+        local.get $a
+        local.get $e
+
+        f32.mul
+
+        local.get $d
+        local.get $b
+        
+        f32.mul
+        f32.sub
+
+        local.tee $z
+        local.get $z
+
+        f32.mul
+        f32.add
+        f32.sqrt
+        local.set $t
+
+        local.get $dest
+        f32.const 1.0
+        local.get $t
+        f32.div
+        local.tee $t
+        local.get $x
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $t
+        local.get $y
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $t
+        local.get $z
+        f32.mul
         f32.store
     )
 
@@ -11460,11 +12551,11 @@
         f32.store
     )
 
-    (func $billboard_around_X (;94;) (export "billboard_around_X") (param $dest i32) (param $tpos i32)
+    (func $billboard_around_X (;94;) (export "billboard_around_X") (param $dest i32) (param $pos i32)
         (local $dx f32) (local $dy f32) (local $dz f32)
         (local $inv_mag f32) (local $mag_sqr f32) (local $part_mag_sqr f32)
 
-        local.get $tpos
+        local.get $pos
         i32.const 4
         i32.add
         f32.load
@@ -11475,7 +12566,7 @@
         local.get $dy
         f32.mul
 
-        local.get $tpos
+        local.get $pos
         i32.const 8
         i32.add
         f32.load
@@ -11488,7 +12579,7 @@
         f32.add
         local.tee $part_mag_sqr
 
-        local.get $tpos
+        local.get $pos
         f32.load
         global.get $ex
         f32.demote_f64
@@ -11583,13 +12674,13 @@
         f32.store
     )
 
-    (func $billboard_around_Y (;94;) (export "billboard_around_Y") (param $dest i32) (param $tpos i32)
+    (func $billboard_around_Y (;94;) (export "billboard_around_Y") (param $dest i32) (param $pos i32)
         (local $dx f32) (local $dy f32) (local $dz f32)
         (local $inv_mag f32) (local $mag_sqr f32) (local $part_mag_sqr f32)
 
         global.get $ex
         f32.demote_f64
-        local.get $tpos
+        local.get $pos
         f32.load
         f32.sub
         local.tee $dx
@@ -11598,7 +12689,7 @@
 
         global.get $ez
         f32.demote_f64
-        local.get $tpos
+        local.get $pos
         i32.const 8
         i32.add
         f32.load
@@ -11611,7 +12702,7 @@
 
         global.get $ey
         f32.demote_f64
-        local.get $tpos
+        local.get $pos
         i32.const 4
         i32.add
         f32.load
@@ -11706,13 +12797,13 @@
         f32.store
     )
 
-    (func $billboard_around_Z (;76;) (export "billboard_around_Z") (param $dest i32) (param $tpos i32)
+    (func $billboard_around_Z (;76;) (export "billboard_around_Z") (param $dest i32) (param $pos i32)
         (local $dx f32) (local $dy f32)
         (local $inv_mag f32) (local $mag_sqr f32)
 
         global.get $ex
         f32.demote_f64
-        local.get $tpos
+        local.get $pos
         f32.load
         f32.sub
         local.tee $dx
@@ -11721,7 +12812,7 @@
 
         global.get $ey
         f32.demote_f64
-        local.get $tpos
+        local.get $pos
         i32.const 4
         i32.add
         f32.load
@@ -11807,7 +12898,7 @@
         f32.store
     )
 
-    (func $billboard_spherical (;108;) (export "billboard_spherical") (param $dest i32) (param $tpos i32)
+    (func $billboard_spherical (;108;) (export "billboard_spherical") (param $dest i32) (param $pos i32)
         (local $dx f32) (local $dy f32) (local $dz f32)
         (local $fx f32) (local $fy f32) (local $fz f32)
         (local $rx f32) (local $rz f32)
@@ -11816,7 +12907,7 @@
         f32.const 1.0
         global.get $ex
         f32.demote_f64
-        local.get $tpos
+        local.get $pos
         f32.load
         f32.sub
         local.tee $dx
@@ -11825,7 +12916,7 @@
 
         global.get $ez
         f32.demote_f64
-        local.get $tpos
+        local.get $pos
         i32.const 8
         i32.add
         f32.load
@@ -11838,7 +12929,7 @@
 
         global.get $ey
         f32.demote_f64
-        local.get $tpos
+        local.get $pos
         i32.const 4
         i32.add
         f32.load
@@ -11960,479 +13051,203 @@
         f32.store
     )
 
-    (func $transform_SXYZTi (;162+6jscalls;) (export "transform_SXYZTi") (param $dest i32) (param $sx f64) (param $sy f64) (param $sz f64) (param $ox f64) (param $oy f64) (param $oz f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $a f64) (local $b f64) (local $c f64) (local $d f64) (local $e f64) (local $f f64)
-        (local $t1 f64) (local $t2 f64)
-        local.get $ox
-        call $cos
+    (func $transform_SXYZT (;173+6jscalls;) (export "transform_SXYZT") (param $dest i32) (param $scale i32) (param $eulerXYZ i32) (param $pos i32)
+        (local $t f32)
+        (local $a f32) (local $b f32) (local $c f32) (local $d f32) (local $e f32) (local $f f32)
+        (local $t1 f32) (local $t2 f32)
+        local.get $eulerXYZ
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $a
 
-        local.get $ox
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $b
 
-        local.get $oy
-        call $cos
+        local.get $eulerXYZ
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $c
 
-        local.get $oy
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $d
 
-        local.get $oz
-        call $cos
+        local.get $eulerXYZ
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $e
 
-        local.get $oz
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $f
 
         local.get $dest
-        local.get $sx
+        local.get $scale
+        f32.load
+        local.tee $t
         local.get $c
         local.get $e
-        f64.mul
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        f32.mul
         f32.store
 
         local.get $dest
         i32.const 4
         i32.add
-        local.get $sx
+        local.get $t
         local.get $c
         local.get $f
-        f64.mul
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        f32.mul
         f32.store
 
         local.get $dest
         i32.const 8
         i32.add
-        local.get $sx
+        local.get $t
         local.get $d
-        f64.mul
-        f64.neg
-        f32.demote_f64
+        f32.mul
+        f32.neg
         f32.store
 
         local.get $dest
         i32.const 12
         i32.add
-        f64.const 0.0
-        f32.demote_f64
+        f32.const 0.0
         f32.store
 
         local.get $dest
         i32.const 16
         i32.add
-        local.get $sy
+        local.get $scale
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
         local.get $b
         local.get $e
-        f64.mul
+        f32.mul
         local.tee $t1
         local.get $d
-        f64.mul
+        f32.mul
         local.get $a
         local.get $f
-        f64.mul
-        f64.sub
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        f32.sub
+        f32.mul
         f32.store
 
         local.get $dest
         i32.const 20
         i32.add
-        local.get $sy
+        local.get $t
         local.get $b
         local.get $f
-        f64.mul
+        f32.mul
         local.tee $t2
         local.get $d
-        f64.mul
+        f32.mul
         local.get $a
         local.get $e
-        f64.mul
-        f64.add
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        f32.add
+        f32.mul
         f32.store
 
         local.get $dest
         i32.const 24
         i32.add
-        local.get $sy
+        local.get $t
         local.get $b
         local.get $c
-        f64.mul
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        f32.mul
         f32.store
 
         local.get $dest
         i32.const 28
         i32.add
-        f64.const 0.0
-        f32.demote_f64
+        f32.const 0.0
         f32.store
 
         local.get $dest
         i32.const 32
         i32.add
-        local.get $sz
-        local.get $t2
-        local.get $a
-        local.get $d
-        f64.mul
-        local.tee $t2
-        local.get $e
-        f64.mul
-        f64.add
-        f64.mul
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 36
-        i32.add
-        local.get $sz
-        local.get $t2
-        local.get $f
-        f64.mul
-        local.get $t1
-        f64.sub
-        f64.mul
-        f32.demote_f64
-        f32.store
-        
-        local.get $dest
-        i32.const 40
-        i32.add
-        local.get $sz
-        local.get $a
-        local.get $c
-        f64.mul
-        f64.mul
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 44
-        i32.add
-        f64.const 0.0
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 48
-        i32.add
-        local.get $tx
-        f32.store
-
-        local.get $dest
-        i32.const 52
-        i32.add
-        local.get $ty
-        f32.store
-
-        local.get $dest
-        i32.const 56
-        i32.add
-        local.get $tz
-        f32.store
-
-        local.get $dest
-        i32.const 60
-        i32.add
-        f64.const 1.0
-        f32.demote_f64
-        f32.store
-    )
-
-    (func $transform_XYZTi (;144+6jscalls;) (export "transform_XYZTi") (param $dest i32) (param $ox f64) (param $oy f64) (param $oz f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $a f64) (local $b f64) (local $c f64) (local $d f64) (local $e f64) (local $f f64)
-        (local $t1 f64) (local $t2 f64)
-        local.get $ox
-        call $cos
-        local.set $a
-
-        local.get $ox
-        call $sin
-        local.set $b
-
-        local.get $oy
-        call $cos
-        local.set $c
-
-        local.get $oy
-        call $sin
-        local.set $d
-
-        local.get $oz
-        call $cos
-        local.set $e
-
-        local.get $oz
-        call $sin
-        local.set $f
-
-        local.get $dest
-        local.get $c
-        local.get $e
-        f64.mul
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 4
-        i32.add
-        local.get $c
-        local.get $f
-        f64.mul
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
+        local.get $scale
         i32.const 8
         i32.add
-        local.get $d
-        f64.neg
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 12
-        i32.add
-        f64.const 0.0
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 16
-        i32.add
-        local.get $b
-        local.get $e
-        f64.mul
-        local.tee $t1
-        local.get $d
-        f64.mul
-        local.get $a
-        local.get $f
-        f64.mul
-        f64.sub
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 20
-        i32.add
-        local.get $b
-        local.get $f
-        f64.mul
-        local.tee $t2
-        local.get $d
-        f64.mul
-        local.get $a
-        local.get $e
-        f64.mul
-        f64.add
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 24
-        i32.add
-        local.get $b
-        local.get $c
-        f64.mul
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 28
-        i32.add
-        f64.const 0.0
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 32
-        i32.add
+        f32.load
+        local.tee $t
         local.get $t2
         local.get $a
         local.get $d
-        f64.mul
+        f32.mul
         local.tee $t2
         local.get $e
-        f64.mul
-        f64.add
-        f32.demote_f64
+        f32.mul
+        f32.add
+        f32.mul
         f32.store
 
         local.get $dest
         i32.const 36
         i32.add
+        local.get $t
         local.get $t2
         local.get $f
-        f64.mul
+        f32.mul
         local.get $t1
-        f64.sub
-        f32.demote_f64
+        f32.sub
+        f32.mul
         f32.store
         
         local.get $dest
         i32.const 40
         i32.add
+        local.get $t
         local.get $a
         local.get $c
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        f32.mul
         f32.store
 
         local.get $dest
         i32.const 44
         i32.add
-        f64.const 0.0
-        f32.demote_f64
+        f32.const 0.0
         f32.store
 
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
-        f32.store
-
-        local.get $dest
-        i32.const 56
-        i32.add
-        local.get $tz
-        f32.store
-
-        local.get $dest
-        i32.const 60
-        i32.add
-        f64.const 1.0
-        f32.demote_f64
-        f32.store
-    )
-
-    (func $transform_SXTi (;90+2jscalls;) (export "transform_SXTi") (param $dest i32) (param $sx f64) (param $sy f64) (param $sz f64) (param $ox f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $a f64) (local $b f64)
-        local.get $ox
-        call $cos
-        local.set $a
-        local.get $ox
-        call $sin
-        local.set $b
-
-        local.get $dest
-        local.get $sx
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
+        local.get $pos
         i32.const 4
         i32.add
-        f32.const 0.0
-        f32.store
-
-        local.get $dest
-        i32.const 8
-        i32.add
-        f32.const 0.0
-        f32.store
-        
-        local.get $dest
-        i32.const 12
-        i32.add
-        f32.const 0.0
-        f32.store
-
-        local.get $dest
-        i32.const 16
-        i32.add
-        f32.const 0.0
-        f32.store
-
-        local.get $dest
-        i32.const 20
-        i32.add
-        local.get $a
-        local.get $sy
-        f64.mul
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 24
-        i32.add
-        local.get $b
-        local.get $sy
-        f64.mul
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 28
-        i32.add
-        f32.const 0.0
-        f32.store
-
-        local.get $dest
-        i32.const 32
-        i32.add
-        f32.const 0.0
-        f32.store
-
-        local.get $dest
-        i32.const 36
-        i32.add
-        local.get $b
-        local.get $sz
-        f64.mul
-        f64.neg
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 40
-        i32.add
-        local.get $a
-        local.get $sz
-        f64.mul
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 44
-        i32.add
-        f32.const 0.0
-        f32.store
-
-        local.get $dest
-        i32.const 48
-        i32.add
-        local.get $tx
-        f32.store
-
-        local.get $dest
-        i32.const 52
-        i32.add
-        local.get $ty
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -12442,13 +13257,324 @@
         f32.store
     )
 
-    (func $transform_XTi (;87+2jscalls;) (export "transform_XTi") (param $dest i32) (param $ox f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $cx f64) (local $sx f64)
-        local.get $ox
-        call $cos
+    (func $transform_XYZT (;144+6jscalls;) (export "transform_XYZT") (param $dest i32) (param $eulerXYZ i32) (param $pos i32)
+        (local $t f32)
+        (local $a f32) (local $b f32) (local $c f32) (local $d f32) (local $e f32) (local $f f32)
+        (local $t1 f32) (local $t2 f32)
+        local.get $eulerXYZ
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $a
+
+        local.get $t
+        call $sinf32
+        local.set $b
+
+        local.get $eulerXYZ
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $c
+
+        local.get $t
+        call $sinf32
+        local.set $d
+
+        local.get $eulerXYZ
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $e
+
+        local.get $t
+        call $sinf32
+        local.set $f
+
+        local.get $dest
+        local.get $c
+        local.get $e
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $c
+        local.get $f
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $d
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 12
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        local.get $b
+        local.get $e
+        f32.mul
+        local.tee $t1
+        local.get $d
+        f32.mul
+        local.get $a
+        local.get $f
+        f32.mul
+        f32.sub
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $b
+        local.get $f
+        f32.mul
+        local.tee $t2
+        local.get $d
+        f32.mul
+        local.get $a
+        local.get $e
+        f32.mul
+        f32.add
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        local.get $b
+        local.get $c
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        local.get $t2
+        local.get $a
+        local.get $d
+        f32.mul
+        local.tee $t2
+        local.get $e
+        f32.mul
+        f32.add
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+        local.get $t2
+        local.get $f
+        f32.mul
+        local.get $t1
+        f32.sub
+        f32.store
+        
+        local.get $dest
+        i32.const 40
+        i32.add
+        local.get $a
+        local.get $c
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 44
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 48
+        i32.add
+        local.get $pos
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 52
+        i32.add
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 56
+        i32.add
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 60
+        i32.add
+        f32.const 1.0
+        f32.store
+    )
+
+    (func $transform_SXT (;90+2jscalls;) (export "transform_SXT") (param $dest i32) (param $scale i32) (param $eulerX i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32)
+        local.get $eulerX
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $a
+        local.get $t
+        call $sinf32
+        local.set $b
+
+        local.get $dest
+        local.get $scale
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        f32.const 0.0
+        f32.store
+        
+        local.get $dest
+        i32.const 12
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $a
+        local.get $scale
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        local.get $b
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+        local.get $b
+        local.get $scale
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 40
+        i32.add
+        local.get $a
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 44
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 48
+        i32.add
+        local.get $pos
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 52
+        i32.add
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 56
+        i32.add
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 60
+        i32.add
+        f32.const 1.0
+        f32.store
+    )
+
+    (func $transform_XT (;87+2jscalls;) (export "transform_XT") (param $dest i32) (param $eulerX i32) (param $pos i32)
+        (local $t f32) (local $cx f32) (local $sx f32)
+        local.get $eulerX
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $cx
-        local.get $ox
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $sx
 
         local.get $dest
@@ -12483,14 +13609,12 @@
         i32.const 20
         i32.add
         local.get $cx
-        f32.demote_f64
         f32.store
 
         local.get $dest
         i32.const 24
         i32.add
         local.get $sx
-        f32.demote_f64
         f32.store
 
         local.get $dest
@@ -12509,15 +13633,13 @@
         i32.const 36
         i32.add
         local.get $sx
-        f64.neg
-        f32.demote_f64
+        f32.neg
         f32.store
 
         local.get $dest
         i32.const 40
         i32.add
         local.get $cx
-        f32.demote_f64
         f32.store
 
         local.get $dest
@@ -12529,19 +13651,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -12551,20 +13680,23 @@
         f32.store
     )
 
-    (func $transform_SYTi (;90+2jscalls;) (export "transform_SYTi") (param $dest i32) (param $sx f64) (param $sy f64) (param $sz f64) (param $oy f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $a f64) (local $b f64)
-        local.get $oy
-        call $cos
+    (func $transform_SYT (;90+2jscalls;) (export "transform_SYT") (param $dest i32) (param $scale i32) (param $eulerY i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32)
+        local.get $eulerY
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $a
-        local.get $oy
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $b
 
         local.get $dest
         local.get $a
-        local.get $sx
-        f64.mul
-        f32.demote_f64
+        local.get $scale
+        f32.load
+        local.tee $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -12577,10 +13709,9 @@
         i32.const 8
         i32.add
         local.get $b
-        local.get $sx
-        f64.mul
-        f64.neg
-        f32.demote_f64
+        local.get $t
+        f32.mul
+        f32.neg
         f32.store
         
         local.get $dest
@@ -12598,8 +13729,10 @@
         local.get $dest
         i32.const 20
         i32.add
-        local.get $sy
-        f32.demote_f64
+        local.get $scale
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -12618,9 +13751,12 @@
         i32.const 32
         i32.add
         local.get $b
-        local.get $sz
-        f64.mul
-        f32.demote_f64
+        local.get $scale
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -12633,9 +13769,8 @@
         i32.const 40
         i32.add
         local.get $a
-        local.get $sz
-        f64.mul
-        f32.demote_f64
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -12647,19 +13782,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -12669,18 +13811,19 @@
         f32.store
     )
 
-    (func $transform_YTi (;87+2jscalls;) (export "transform_YTi") (param $dest i32) (param $oy f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $cy f64) (local $sy f64)
-        local.get $oy
-        call $cos
+    (func $transform_YT (;87+2jscalls;) (export "transform_YT") (param $dest i32) (param $eulerY i32) (param $pos i32)
+        (local $t f32) (local $cy f32) (local $sy f32)
+        local.get $eulerY
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $cy
-        local.get $oy
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $sy
 
         local.get $dest
         local.get $cy
-        f32.demote_f64
         f32.store
 
         local.get $dest
@@ -12693,8 +13836,7 @@
         i32.const 8
         i32.add
         local.get $sy
-        f64.neg
-        f32.demote_f64
+        f32.neg
         f32.store
         
         local.get $dest
@@ -12731,7 +13873,6 @@
         i32.const 32
         i32.add
         local.get $sy
-        f32.demote_f64
         f32.store
 
         local.get $dest
@@ -12744,7 +13885,6 @@
         i32.const 40
         i32.add
         local.get $cy
-        f32.demote_f64
         f32.store
 
         local.get $dest
@@ -12756,19 +13896,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -12778,29 +13925,31 @@
         f32.store
     )
 
-    (func $transform_SZTi (;90+2jscalls;) (export "transform_SZTi") (param $dest i32) (param $sx f64) (param $sy f64) (param $sz f64) (param $oz f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $a f64) (local $b f64)
-        local.get $oz
-        call $cos
+    (func $transform_SZT (;90+2jscalls;) (export "transform_SZT") (param $dest i32) (param $scale i32) (param $eulerZ i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32)
+        local.get $eulerZ
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $a
-        local.get $oz
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $b
 
         local.get $dest
         local.get $a
-        local.get $sx
-        f64.mul
-        f32.demote_f64
+        local.get $scale
+        f32.load
+        local.tee $t
+        f32.mul
         f32.store
 
         local.get $dest
         i32.const 4
         i32.add
         local.get $b
-        local.get $sx
-        f64.mul
-        f32.demote_f64
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -12819,19 +13968,21 @@
         i32.const 16
         i32.add
         local.get $b
-        local.get $sy
-        f64.mul
-        f64.neg
-        f32.demote_f64
+        local.get $scale
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.neg
         f32.store
 
         local.get $dest
         i32.const 20
         i32.add
         local.get $a
-        local.get $sy
-        f64.mul
-        f32.demote_f64
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -12861,8 +14012,10 @@
         local.get $dest
         i32.const 40
         i32.add
-        local.get $sz
-        f32.demote_f64
+        local.get $scale
+        i32.const 8
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -12874,19 +14027,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -12896,25 +14056,25 @@
         f32.store
     )
 
-    (func $transform_ZTi (;87+2jscalls;) (export "transform_ZTi") (param $dest i32) (param $oz f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $cz f64) (local $sz f64)
-        local.get $oz
-        call $cos
+    (func $transform_ZT (;87+2jscalls;) (export "transform_ZT") (param $dest i32) (param $eulerZ i32) (param $pos i32)
+        (local $t f32) (local $cz f32) (local $sz f32)
+        local.get $eulerZ
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $cz
-        local.get $oz
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $sz
 
         local.get $dest
         local.get $cz
-        f32.demote_f64
         f32.store
 
         local.get $dest
         i32.const 4
         i32.add
         local.get $sz
-        f32.demote_f64
         f32.store
 
         local.get $dest
@@ -12933,15 +14093,13 @@
         i32.const 16
         i32.add
         local.get $sz
-        f64.neg
-        f32.demote_f64
+        f32.neg
         f32.store
 
         local.get $dest
         i32.const 20
         i32.add
         local.get $cz
-        f32.demote_f64
         f32.store
 
         local.get $dest
@@ -12983,19 +14141,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -13005,29 +14170,36 @@
         f32.store
     )
 
-    (func $transform_SXYTi (;120+4jscalls;) (export "transform_SXYTi") (param $dest i32) (param $sx f64) (param $sy f64) (param $sz f64) (param $ox f64) (param $oy f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $a f64) (local $b f64) (local $c f64) (local $d f64)
-        local.get $ox
-        call $cos
+    (func $transform_SXYT (;120+4jscalls;) (export "transform_SXYT") (param $dest i32) (param $scale i32) (param $eulerXY i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32) (local $c f32) (local $d f32)
+        local.get $eulerXY
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $a
 
-        local.get $ox
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $b
 
-        local.get $oy
-        call $cos
+        local.get $eulerXY
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $c
         
-        local.get $oy
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $d
 
         local.get $dest
         local.get $c
-        local.get $sx
-        f64.mul
-        f32.demote_f64
+        local.get $scale
+        f32.load
+        local.tee $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13040,10 +14212,9 @@
         i32.const 8
         i32.add
         local.get $d
-        local.get $sx
-        f64.mul
-        f64.neg
-        f32.demote_f64
+        local.get $t
+        f32.mul
+        f32.neg
         f32.store
 
         local.get $dest
@@ -13057,19 +14228,21 @@
         i32.add
         local.get $b
         local.get $d
-        f64.mul
-        local.get $sy
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        local.get $scale
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        f32.mul
         f32.store
 
         local.get $dest
         i32.const 20
         i32.add
         local.get $a
-        local.get $sy
-        f64.mul
-        f32.demote_f64
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13077,10 +14250,9 @@
         i32.add
         local.get $b
         local.get $c
-        f64.mul
-        local.get $sy
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13094,20 +14266,22 @@
         i32.add
         local.get $a
         local.get $d
-        f64.mul
-        local.get $sz
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        local.get $scale
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $t
+        f32.mul
         f32.store
 
         local.get $dest
         i32.const 36
         i32.add
         local.get $b
-        local.get $sz
-        f64.mul
-        f64.neg
-        f32.demote_f64
+        local.get $t
+        f32.mul
+        f32.neg
         f32.store
 
         local.get $dest
@@ -13115,10 +14289,9 @@
         i32.add
         local.get $a
         local.get $c
-        f64.mul
-        local.get $sz
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13130,19 +14303,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -13152,27 +14332,32 @@
         f32.store
     )
 
-    (func $transform_XYTi (;104+4jscalls;) (export "transform_XYTi") (param $dest i32) (param $ox f64) (param $oy f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $a f64) (local $b f64) (local $c f64) (local $d f64)
-        local.get $ox
-        call $cos
+    (func $transform_XYT (;104+4jscalls;) (export "transform_XYT") (param $dest i32) (param $eulerXY i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32) (local $c f32) (local $d f32)
+        local.get $eulerXY
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $a
 
-        local.get $ox
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $b
 
-        local.get $oy
-        call $cos
+        local.get $eulerXY
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $c
         
-        local.get $oy
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $d
 
         local.get $dest
         local.get $c
-        f32.demote_f64
         f32.store
 
         local.get $dest
@@ -13185,8 +14370,7 @@
         i32.const 8
         i32.add
         local.get $d
-        f64.neg
-        f32.demote_f64
+        f32.neg
         f32.store
 
         local.get $dest
@@ -13200,15 +14384,13 @@
         i32.add
         local.get $b
         local.get $d
-        f64.mul
-        f32.demote_f64
+        f32.mul
         f32.store
 
         local.get $dest
         i32.const 20
         i32.add
         local.get $a
-        f32.demote_f64
         f32.store
 
         local.get $dest
@@ -13216,8 +14398,7 @@
         i32.add
         local.get $b
         local.get $c
-        f64.mul
-        f32.demote_f64
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13231,16 +14412,14 @@
         i32.add
         local.get $a
         local.get $d
-        f64.mul
-        f32.demote_f64
+        f32.mul
         f32.store
 
         local.get $dest
         i32.const 36
         i32.add
         local.get $b
-        f64.neg
-        f32.demote_f64
+        f32.neg
         f32.store
 
         local.get $dest
@@ -13248,8 +14427,7 @@
         i32.add
         local.get $a
         local.get $c
-        f64.mul
-        f32.demote_f64
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13261,19 +14439,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -13283,29 +14468,36 @@
         f32.store
     )
 
-    (func $transform_SXZTi (;120+4jscalls;) (export "transform_SXZTi") (param $dest i32) (param $sx f64) (param $sy f64) (param $sz f64) (param $ox f64) (param $oz f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $a f64) (local $b f64) (local $c f64) (local $d f64)
-        local.get $ox
-        call $cos
+    (func $transform_SXZT (;120+4jscalls;) (export "transform_SXZT") (param $dest i32) (param $scale i32) (param $eulerXZ i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32) (local $c f32) (local $d f32)
+        local.get $eulerXZ
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $a
 
-        local.get $ox
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $b
 
-        local.get $oz
-        call $cos
+        local.get $eulerXZ
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $c
         
-        local.get $oz
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $d
 
         local.get $dest
         local.get $c
-        local.get $sx
-        f64.mul
-        f32.demote_f64
+        local.get $scale
+        f32.load
+        local.tee $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13313,10 +14505,9 @@
         i32.add
         local.get $a
         local.get $d
-        f64.mul
-        local.get $sx
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13324,10 +14515,9 @@
         i32.add
         local.get $b
         local.get $d
-        f64.mul
-        local.get $sx
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13340,10 +14530,13 @@
         i32.const 16
         i32.add
         local.get $d
-        local.get $sy
-        f64.mul
-        f64.neg
-        f32.demote_f64
+        local.get $scale
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.neg
         f32.store
 
         local.get $dest
@@ -13351,10 +14544,9 @@
         i32.add
         local.get $a
         local.get $c
-        f64.mul
-        local.get $sy
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13362,10 +14554,9 @@
         i32.add
         local.get $b
         local.get $c
-        f64.mul
-        local.get $sy
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13384,19 +14575,21 @@
         i32.const 36
         i32.add
         local.get $b
-        local.get $sz
-        f64.mul
-        f64.neg
-        f32.demote_f64
+        local.get $scale
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.neg
         f32.store
 
         local.get $dest
         i32.const 40
         i32.add
         local.get $a
-        local.get $sz
-        f64.mul
-        f32.demote_f64
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13408,19 +14601,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -13430,27 +14630,32 @@
         f32.store
     )
 
-    (func $transform_XZTi (;104+4jscalls;) (export "transform_XZTi") (param $dest i32) (param $ox f64) (param $oz f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $a f64) (local $b f64) (local $c f64) (local $d f64)
-        local.get $ox
-        call $cos
+    (func $transform_XZT (;104+4jscalls;) (export "transform_XZT") (param $dest i32) (param $eulerXZ i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32) (local $c f32) (local $d f32)
+        local.get $eulerXZ
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $a
 
-        local.get $ox
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $b
 
-        local.get $oz
-        call $cos
+        local.get $eulerXZ
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $c
         
-        local.get $oz
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $d
 
         local.get $dest
         local.get $c
-        f32.demote_f64
         f32.store
 
         local.get $dest
@@ -13458,8 +14663,7 @@
         i32.add
         local.get $a
         local.get $d
-        f64.mul
-        f32.demote_f64
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13467,8 +14671,7 @@
         i32.add
         local.get $b
         local.get $d
-        f64.mul
-        f32.demote_f64
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13481,8 +14684,7 @@
         i32.const 16
         i32.add
         local.get $d
-        f64.neg
-        f32.demote_f64
+        f32.neg
         f32.store
 
         local.get $dest
@@ -13490,8 +14692,7 @@
         i32.add
         local.get $a
         local.get $c
-        f64.mul
-        f32.demote_f64
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13499,8 +14700,7 @@
         i32.add
         local.get $b
         local.get $c
-        f64.mul
-        f32.demote_f64
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13519,15 +14719,13 @@
         i32.const 36
         i32.add
         local.get $b
-        f64.neg
-        f32.demote_f64
+        f32.neg
         f32.store
 
         local.get $dest
         i32.const 40
         i32.add
         local.get $a
-        f32.demote_f64
         f32.store
 
         local.get $dest
@@ -13539,19 +14737,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -13561,40 +14766,46 @@
         f32.store
     )
 
-    (func $transform_SYZTi (;120+4jscalls;) (export "transform_SYZTi") (param $dest i32) (param $sx f64) (param $sy f64) (param $sz f64) (param $oy f64) (param $oz f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $a f64) (local $b f64) (local $c f64) (local $d f64)
-        local.get $oy
-        call $cos
+    (func $transform_SYZT (;120+4jscalls;) (export "transform_SYZT") (param $dest i32) (param $scale i32) (param $eulerYZ i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32) (local $c f32) (local $d f32)
+        local.get $eulerYZ
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $a
 
-        local.get $oy
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $b
 
-        local.get $oz
-        call $cos
+        local.get $eulerYZ
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        call $cosf32
         local.set $c
         
-        local.get $oz
-        call $sin
+        local.get $t
+        call $sinf32
         local.set $d
 
         local.get $dest
         local.get $a
         local.get $c
-        f64.mul
-        local.get $sx
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        local.get $scale
+        f32.load
+        local.tee $t
+        f32.mul
         f32.store
 
         local.get $dest
         i32.const 4
         i32.add
         local.get $d
-        local.get $sx
-        f64.mul
-        f32.demote_f64
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13602,152 +14813,10 @@
         i32.add
         local.get $b
         local.get $c
-        f64.mul
-        local.get $sx
-        f64.mul
-        f64.neg
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 12
-        i32.add
-        f32.const 0.0
-        f32.store
-
-        local.get $dest
-        i32.const 16
-        i32.add
-        local.get $a
-        local.get $d
-        f64.mul
-        local.get $sy
-        f64.mul
-        f64.neg
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 20
-        i32.add
-        local.get $c
-        local.get $sy
-        f64.mul
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 24
-        i32.add
-        local.get $b
-        local.get $d
-        f64.mul
-        local.get $sy
-        f64.mul
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 28
-        i32.add
-        f32.const 0.0
-        f32.store
-
-        local.get $dest
-        i32.const 32
-        i32.add
-        local.get $b
-        local.get $sz
-        f64.mul
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 36
-        i32.add
-        f32.const 0.0
-        f32.store
-
-        local.get $dest
-        i32.const 40
-        i32.add
-        local.get $a
-        local.get $sz
-        f64.mul
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 44
-        i32.add
-        f32.const 0.0
-        f32.store
-
-        local.get $dest
-        i32.const 48
-        i32.add
-        local.get $tx
-        f32.store
-
-        local.get $dest
-        i32.const 52
-        i32.add
-        local.get $ty
-        f32.store
-
-        local.get $dest
-        i32.const 56
-        i32.add
-        local.get $tz
-        f32.store
-
-        local.get $dest
-        i32.const 60
-        i32.add
-        f32.const 1.0
-        f32.store
-    )
-
-    (func $transform_YZTi (;104+4jscalls;) (export "transform_YZTi") (param $dest i32) (param $oy f64) (param $oz f64) (param $tx f32) (param $ty f32) (param $tz f32)
-        (local $a f64) (local $b f64) (local $c f64) (local $d f64)
-        local.get $oy
-        call $cos
-        local.set $a
-
-        local.get $oy
-        call $sin
-        local.set $b
-
-        local.get $oz
-        call $cos
-        local.set $c
-        
-        local.get $oz
-        call $sin
-        local.set $d
-
-        local.get $dest
-        local.get $a
-        local.get $c
-        f64.mul
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 4
-        i32.add
-        local.get $d
-        f32.demote_f64
-        f32.store
-
-        local.get $dest
-        i32.const 8
-        i32.add
-        local.get $b
-        local.get $c
-        f64.mul
-        f64.neg
-        f32.demote_f64
+        f32.mul
+        local.get $t
+        f32.mul
+        f32.neg
         f32.store
 
         local.get $dest
@@ -13761,16 +14830,22 @@
         i32.add
         local.get $a
         local.get $d
-        f64.mul
-        f64.neg
-        f32.demote_f64
+        f32.mul
+        local.get $scale
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.neg
         f32.store
 
         local.get $dest
         i32.const 20
         i32.add
         local.get $c
-        f32.demote_f64
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13778,8 +14853,9 @@
         i32.add
         local.get $b
         local.get $d
-        f64.mul
-        f32.demote_f64
+        f32.mul
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13792,7 +14868,12 @@
         i32.const 32
         i32.add
         local.get $b
-        f32.demote_f64
+        local.get $scale
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13805,7 +14886,8 @@
         i32.const 40
         i32.add
         local.get $a
-        f32.demote_f64
+        local.get $t
+        f32.mul
         f32.store
 
         local.get $dest
@@ -13817,19 +14899,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -13839,7 +14928,144 @@
         f32.store
     )
 
-    (func $transform_SQTi (;179;) (export "transform_SQTi") (param $dest i32) (param $sx f32) (param $sy f32) (param $sz f32) (param $quat i32) (param $tx f32) (param $ty f32) (param $tz f32) 
+    (func $transform_YZT (;104+4jscalls;) (export "transform_YZT") (param $dest i32) (param $eulerYZ i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32) (local $c f32) (local $d f32)
+        local.get $eulerYZ
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $a
+
+        local.get $t
+        call $sinf32
+        local.set $b
+
+        local.get $eulerYZ
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $c
+        
+        local.get $t
+        call $sinf32
+        local.set $d
+
+        local.get $dest
+        local.get $a
+        local.get $c
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $d
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $b
+        local.get $c
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 12
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        local.get $a
+        local.get $d
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $c
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        local.get $b
+        local.get $d
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        local.get $b
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 40
+        i32.add
+        local.get $a
+        f32.store
+
+        local.get $dest
+        i32.const 44
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 48
+        i32.add
+        local.get $pos
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 52
+        i32.add
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 56
+        i32.add
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 60
+        i32.add
+        f32.const 1.0
+        f32.store
+    )
+
+    (func $transform_SQT (;179;) (export "transform_SQT") (param $dest i32) (param $scale i32) (param $quat i32) (param $pos i32) 
+        (local $a f32) (local $b f32)
         (local $x f32) (local $y f32) (local $z f32) (local $w f32)
         (local $xx f32) (local $yy f32) (local $zz f32) (local $t1 f32) (local $t2 f32)
 
@@ -13872,7 +15098,9 @@
 
         f32.add
 
-        local.get $sx
+        local.get $scale
+        f32.load
+        local.tee $a
         f32.mul
 
         f32.store
@@ -13907,7 +15135,7 @@
 
         f32.mul
 
-        local.get $sx
+        local.get $a
         f32.mul
 
         f32.store
@@ -13925,7 +15153,11 @@
 
         f32.mul
 
-        local.get $sy
+        local.get $scale
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $b
         f32.mul
 
         f32.store
@@ -13952,7 +15184,7 @@
 
         f32.mul
 
-        local.get $sx
+        local.get $a
         f32.mul
 
         f32.store
@@ -13970,7 +15202,11 @@
 
         f32.mul
 
-        local.get $sz
+        local.get $scale
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $a
         f32.mul
 
         f32.store
@@ -13997,7 +15233,7 @@
 
         f32.add
 
-        local.get $sy
+        local.get $b
         f32.mul
 
         f32.store
@@ -14024,7 +15260,7 @@
         
         f32.mul
 
-        local.get $sy
+        local.get $b
         f32.mul
 
         f32.store
@@ -14042,7 +15278,7 @@
 
         f32.mul
 
-        local.get $sz
+        local.get $a
         f32.mul
 
         f32.store
@@ -14064,7 +15300,7 @@
 
         f32.add
 
-        local.get $sz
+        local.get $a
         f32.mul
 
         f32.store
@@ -14090,19 +15326,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -14112,7 +15355,7 @@
         f32.store
     )
 
-    (func $transform_QTi (;161;) (export "transform_QTi") (param $dest i32) (param $quat i32) (param $tx f32) (param $ty f32) (param $tz f32) 
+    (func $transform_QT (;161;) (export "transform_QT") (param $dest i32) (param $quat i32) (param $pos i32) 
         (local $x f32) (local $y f32) (local $z f32) (local $w f32)
         (local $xx f32) (local $yy f32) (local $zz f32) (local $t1 f32) (local $t2 f32)
 
@@ -14327,19 +15570,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -14349,11 +15599,14 @@
         f32.store
     )
 
-    (func $transform_SMTi (;121;) (export "transform_SMTi") (param $dest i32) (param $sx f32) (param $sy f32) (param $sz f32) (param $mat i32) (param $tx f32) (param $ty f32) (param $tz f32)
+    (func $transform_SMT (;138;) (export "transform_SMT") (param $dest i32) (param $scale i32) (param $mat i32) (param $pos i32)
+        (local $t f32)
         local.get $dest
         local.get $mat
         f32.load
-        local.get $sx
+        local.get $scale
+        f32.load
+        local.tee $t
         f32.mul
         f32.store
 
@@ -14364,7 +15617,7 @@
         i32.const 4
         i32.add
         f32.load
-        local.get $sx
+        local.get $t
         f32.mul
         f32.store
 
@@ -14375,7 +15628,7 @@
         i32.const 8
         i32.add
         f32.load
-        local.get $sx
+        local.get $t
         f32.mul
         f32.store
 
@@ -14392,7 +15645,11 @@
         i32.const 12
         i32.add
         f32.load
-        local.get $sy
+        local.get $scale
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
         f32.mul
         f32.store
 
@@ -14403,7 +15660,7 @@
         i32.const 16
         i32.add
         f32.load
-        local.get $sy
+        local.get $t
         f32.mul
         f32.store
 
@@ -14414,7 +15671,7 @@
         i32.const 20
         i32.add
         f32.load
-        local.get $sy
+        local.get $t
         f32.mul
         f32.store
 
@@ -14431,7 +15688,11 @@
         i32.const 24
         i32.add
         f32.load
-        local.get $sz
+        local.get $scale
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $t
         f32.mul
         f32.store
 
@@ -14442,7 +15703,7 @@
         i32.const 28
         i32.add
         f32.load
-        local.get $sz
+        local.get $t
         f32.mul
         f32.store
 
@@ -14453,7 +15714,7 @@
         i32.const 32
         i32.add
         f32.load
-        local.get $sz
+        local.get $t
         f32.mul
         f32.store
 
@@ -14466,19 +15727,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -14488,7 +15756,7 @@
         f32.store
     )
 
-    (func $transform_MTi (;103;) (export "transform_MTi") (param $dest i32) (param $mat i32) (param $tx f32) (param $ty f32) (param $tz f32)
+    (func $transform_MT (;110;) (export "transform_MT") (param $dest i32) (param $mat i32) (param $pos i32)
         local.get $dest
         local.get $mat
         f32.load
@@ -14587,19 +15855,26 @@
         local.get $dest
         i32.const 48
         i32.add
-        local.get $tx
+        local.get $pos
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 52
         i32.add
-        local.get $ty
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
         i32.const 56
         i32.add
-        local.get $tz
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
         f32.store
 
         local.get $dest
@@ -14609,6 +15884,1037 @@
         f32.store
     )
 
+    (func $transform_USXYZT (;165+6jscalls;) (export "transform_USXYZT") (param $dest i32) (param $scale i32) (param $eulerXYZ i32) (param $pos i32)
+        (local $s f32)
+        (local $a f32) (local $b f32) (local $c f32) (local $d f32) (local $e f32) (local $f f32)
+        (local $t1 f32) (local $t2 f32)
+        local.get $eulerXYZ
+        f32.load
+        local.tee $s
+        call $cosf32
+        local.set $a
+
+        local.get $s
+        call $sinf32
+        local.set $b
+
+        local.get $eulerXYZ
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $s
+        call $cosf32
+        local.set $c
+
+        local.get $s
+        call $sinf32
+        local.set $d
+
+        local.get $eulerXYZ
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $s
+        call $cosf32
+        local.set $e
+
+        local.get $s
+        call $sinf32
+        local.set $f
+
+        local.get $dest
+        local.get $scale
+        f32.load
+        local.tee $s
+        local.get $c
+        local.get $e
+        f32.mul
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $s
+        local.get $c
+        local.get $f
+        f32.mul
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $s
+        local.get $d
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 12
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        local.get $s
+        local.get $b
+        local.get $e
+        f32.mul
+        local.tee $t1
+        local.get $d
+        f32.mul
+        local.get $a
+        local.get $f
+        f32.mul
+        f32.sub
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $s
+        local.get $b
+        local.get $f
+        f32.mul
+        local.tee $t2
+        local.get $d
+        f32.mul
+        local.get $a
+        local.get $e
+        f32.mul
+        f32.add
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        local.get $s
+        local.get $b
+        local.get $c
+        f32.mul
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        local.get $s
+        local.get $t2
+        local.get $a
+        local.get $d
+        f32.mul
+        local.tee $t2
+        local.get $e
+        f32.mul
+        f32.add
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+        local.get $s
+        local.get $t2
+        local.get $f
+        f32.mul
+        local.get $t1
+        f32.sub
+        f32.mul
+        f32.store
+        
+        local.get $dest
+        i32.const 40
+        i32.add
+        local.get $s
+        local.get $a
+        local.get $c
+        f32.mul
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 44
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 48
+        i32.add
+        local.get $pos
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 52
+        i32.add
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 56
+        i32.add
+        local.get $pos
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 60
+        i32.add
+        f32.const 1.0
+        f32.store
+    )
+
+    (func $transform_USXT (;102+2jscalls;) (export "transform_USXT") (param $dest i32) (param $scale i32) (param $eulerX i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32)
+        local.get $eulerX
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $a
+        local.get $t
+        call $sinf32
+        local.set $b
+
+        local.get $dest
+        local.get $scale
+        f32.load
+        local.tee $t
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        f32.const 0.0
+        f32.store
+        
+        local.get $dest
+        i32.const 12
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $a
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        local.get $b
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+        local.get $b
+        local.get $t
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 40
+        i32.add
+        local.get $a
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 44
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 48
+        i32.add
+        local.get $pos
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 52
+        i32.add
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 56
+        i32.add
+        local.get $pos
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 60
+        i32.add
+        f32.const 1.0
+        f32.store
+    )
+
+    (func $transform_USYT (;102+2jscalls;) (export "transform_USYT") (param $dest i32) (param $scale i32) (param $eulerY i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32)
+        local.get $eulerY
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $a
+        local.get $t
+        call $sinf32
+        local.set $b
+
+        local.get $dest
+        local.get $a
+        local.get $scale
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $b
+        local.get $t
+        f32.mul
+        f32.neg
+        f32.store
+        
+        local.get $dest
+        i32.const 12
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $t
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        local.get $b
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 40
+        i32.add
+        local.get $a
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 44
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 48
+        i32.add
+        local.get $pos
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 52
+        i32.add
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 56
+        i32.add
+        local.get $pos
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 60
+        i32.add
+        f32.const 1.0
+        f32.store
+    )
+
+    (func $transform_USZT (;102+2jscalls;) (export "transform_USZT") (param $dest i32) (param $scale i32) (param $eulerZ i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32)
+        local.get $eulerZ
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $a
+        local.get $t
+        call $sinf32
+        local.set $b
+
+        local.get $dest
+        local.get $a
+        local.get $scale
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $b
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        f32.const 0.0
+        f32.store
+        
+        local.get $dest
+        i32.const 12
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        local.get $b
+        local.get $t
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $a
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 40
+        i32.add
+        local.get $t
+        f32.store
+
+        local.get $dest
+        i32.const 44
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 48
+        i32.add
+        local.get $pos
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 52
+        i32.add
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 56
+        i32.add
+        local.get $pos
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 60
+        i32.add
+        f32.const 1.0
+        f32.store
+    )
+
+    (func $transform_USXYT (;127+4jscalls;) (export "transform_USXYT") (param $dest i32) (param $scale i32) (param $eulerXY i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32) (local $c f32) (local $d f32)
+        local.get $eulerXY
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $a
+
+        local.get $t
+        call $sinf32
+        local.set $b
+
+        local.get $eulerXY
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $c
+        
+        local.get $t
+        call $sinf32
+        local.set $d
+
+        local.get $dest
+        local.get $c
+        local.get $scale
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $d
+        local.get $t
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 12
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        local.get $b
+        local.get $d
+        f32.mul
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $a
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        local.get $b
+        local.get $c
+        f32.mul
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        local.get $a
+        local.get $d
+        f32.mul
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+        local.get $b
+        local.get $t
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 40
+        i32.add
+        local.get $a
+        local.get $c
+        f32.mul
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 44
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 48
+        i32.add
+        local.get $pos
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 52
+        i32.add
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 56
+        i32.add
+        local.get $pos
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 60
+        i32.add
+        f32.const 1.0
+        f32.store
+    )
+
+    (func $transform_USXZT (;127+4jscalls;) (export "transform_USXZT") (param $dest i32) (param $scale i32) (param $eulerXZ i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32) (local $c f32) (local $d f32)
+        local.get $eulerXZ
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $a
+
+        local.get $t
+        call $sinf32
+        local.set $b
+
+        local.get $eulerXZ
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $c
+        
+        local.get $t
+        call $sinf32
+        local.set $d
+
+        local.get $dest
+        local.get $c
+        local.get $scale
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $a
+        local.get $d
+        f32.mul
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $b
+        local.get $d
+        f32.mul
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 12
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        local.get $d
+        local.get $t
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $a
+        local.get $c
+        f32.mul
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        local.get $b
+        local.get $c
+        f32.mul
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+        local.get $b
+        local.get $t
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 40
+        i32.add
+        local.get $a
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 44
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 48
+        i32.add
+        local.get $pos
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 52
+        i32.add
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 56
+        i32.add
+        local.get $pos
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 60
+        i32.add
+        f32.const 1.0
+        f32.store
+    )
+
+    (func $transform_USYZT (;120+4jscalls;) (export "transform_USYZT") (param $dest i32) (param $scale i32) (param $eulerYZ i32) (param $pos i32)
+        (local $t f32) (local $a f32) (local $b f32) (local $c f32) (local $d f32)
+        local.get $eulerYZ
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $a
+
+        local.get $t
+        call $sinf32
+        local.set $b
+
+        local.get $eulerYZ
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        call $cosf32
+        local.set $c
+        
+        local.get $t
+        call $sinf32
+        local.set $d
+
+        local.get $dest
+        local.get $a
+        local.get $c
+        f32.mul
+        local.get $scale
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $d
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $b
+        local.get $c
+        f32.mul
+        local.get $t
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 12
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        local.get $a
+        local.get $d
+        f32.mul
+        local.get $t
+        f32.mul
+        f32.neg
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $c
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        local.get $b
+        local.get $d
+        f32.mul
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 28
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        local.get $b
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 40
+        i32.add
+        local.get $a
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 44
+        i32.add
+        f32.const 0.0
+        f32.store
+
+        local.get $dest
+        i32.const 48
+        i32.add
+        local.get $pos
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 52
+        i32.add
+        local.get $pos
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 56
+        i32.add
+        local.get $pos
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 60
+        i32.add
+        f32.const 1.0
+        f32.store
+    )
 
     (func $transform_set_T (export "transform_set_T") (param $dest i32) (param $from i32)
         local.get $dest
@@ -14637,23 +16943,659 @@
         f32.store
     )
 
-    (func $transform_set_Ti (export "transform_set_Ti") (param $dest i32) (param $tx f32) (param $ty f32) (param $tz f32)
+    ;;(func $transform_set_Ti (export "transform_set_Ti") (param $dest i32) (param $tx f32) (param $ty f32) (param $tz f32)
+    ;;    local.get $dest
+    ;;    i32.const 48
+    ;;    i32.add
+    ;;    local.get $tx
+    ;;    f32.store
+
+    ;;    local.get $dest
+    ;;    i32.const 52
+    ;;    i32.add
+    ;;    local.get $ty
+    ;;    f32.store
+
+    ;;    local.get $dest
+    ;;    i32.const 56
+    ;;    i32.add
+    ;;    local.get $tz
+    ;;    f32.store
+    ;;)
+
+    (func $transform_apply_SQ (;154;) (export "transform_apply_SQ") (param $dest i32) (param $scale i32) (param $quat i32)
+        (local $a f32) (local $b f32)
+        (local $x f32) (local $y f32) (local $z f32) (local $w f32)
+        (local $xx f32) (local $yy f32) (local $zz f32) (local $t1 f32) (local $t2 f32)
+
         local.get $dest
-        i32.const 48
+
+        local.get $quat
+        i32.const 4
         i32.add
-        local.get $tx
+        f32.load
+        local.tee $y
+        local.get $y
+        f32.mul
+        local.tee $yy
+
+        local.get $quat
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $z
+        local.get $z
+        f32.mul
+        local.tee $zz
+
+        f32.add
+
+        f32.const -2.0
+        f32.mul
+
+        f32.const 1.0
+
+        f32.add
+
+        local.get $scale
+        f32.load
+        local.tee $a
+
+        f32.mul
+
         f32.store
 
         local.get $dest
-        i32.const 52
+        i32.const 4
         i32.add
-        local.get $ty
+
+        local.get $quat
+        f32.load
+
+        local.tee $x
+        local.get $y
+
+        f32.mul
+        local.tee $t1
+
+        local.get $quat
+        i32.const 12
+        i32.add
+        f32.load
+
+        local.tee $w
+        local.get $z
+
+        f32.mul
+        local.tee $t2
+
+        f32.add
+
+        f32.const 2.0
+
+        f32.mul
+
+        local.get $a
+        f32.mul
+
         f32.store
 
         local.get $dest
-        i32.const 56
+        i32.const 16
         i32.add
-        local.get $tz
+
+        local.get $t1
+        local.get $t2
+
+        f32.sub
+
+        f32.const 2.0
+
+        f32.mul
+
+        local.get $scale
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $b
+
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+
+        local.get $x
+        local.get $z
+
+        f32.mul
+        local.tee $t1
+
+        local.get $w
+        local.get $y
+
+        f32.mul
+        local.tee $t2
+
+        f32.sub
+
+        f32.const 2.0
+
+        f32.mul
+
+        local.get $a
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+
+        local.get $t1
+        local.get $t2
+
+        f32.add
+
+        f32.const 2.0
+
+        f32.mul
+
+        local.get $scale
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $a
+
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+
+        local.get $x
+        local.get $x
+
+        f32.mul
+        local.tee $xx
+
+        local.get $zz
+        
+        f32.add
+
+        f32.const -2.0
+
+        f32.mul
+
+        f32.const 1.0
+
+        f32.add
+
+        local.get $b
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+
+        local.get $y
+        local.get $z
+
+        f32.mul
+        local.tee $t1
+
+        local.get $w
+        local.get $x
+
+        f32.mul
+        local.tee $t2
+
+        f32.add
+
+        f32.const 2.0
+        
+        f32.mul
+
+        local.get $b
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+
+        local.get $t1
+        local.get $t2
+
+        f32.sub
+
+        f32.const 2.0
+
+        f32.mul
+
+        local.get $a
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 40
+        i32.add
+
+        local.get $xx
+        local.get $yy
+
+        f32.add
+
+        f32.const -2.0
+        
+        f32.mul
+
+        f32.const 1.0
+
+        f32.add
+
+        local.get $a
+        f32.mul
+
+        f32.store
+    )
+
+    (func $transform_apply_Q (;126;) (export "transform_apply_Q") (param $dest i32) (param $quat i32)
+        (local $x f32) (local $y f32) (local $z f32) (local $w f32)
+        (local $xx f32) (local $yy f32) (local $zz f32) (local $t1 f32) (local $t2 f32)
+
+        local.get $dest
+
+        local.get $quat
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $y
+        local.get $y
+        f32.mul
+        local.tee $yy
+
+        local.get $quat
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $z
+        local.get $z
+        f32.mul
+        local.tee $zz
+
+        f32.add
+
+        f32.const -2.0
+        f32.mul
+
+        f32.const 1.0
+
+        f32.add
+
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+
+        local.get $quat
+        f32.load
+
+        local.tee $x
+        local.get $y
+
+        f32.mul
+        local.tee $t1
+
+        local.get $quat
+        i32.const 12
+        i32.add
+        f32.load
+
+        local.tee $w
+        local.get $z
+
+        f32.mul
+        local.tee $t2
+
+        f32.add
+
+        f32.const 2.0
+
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+
+        local.get $t1
+        local.get $t2
+
+        f32.sub
+
+        f32.const 2.0
+
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+
+        local.get $x
+        local.get $z
+
+        f32.mul
+        local.tee $t1
+
+        local.get $w
+        local.get $y
+
+        f32.mul
+        local.tee $t2
+
+        f32.sub
+
+        f32.const 2.0
+
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+
+        local.get $t1
+        local.get $t2
+
+        f32.add
+
+        f32.const 2.0
+
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+
+        local.get $x
+        local.get $x
+
+        f32.mul
+        local.tee $xx
+
+        local.get $zz
+        
+        f32.add
+
+        f32.const -2.0
+
+        f32.mul
+
+        f32.const 1.0
+
+        f32.add
+
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+
+        local.get $y
+        local.get $z
+
+        f32.mul
+        local.tee $t1
+
+        local.get $w
+        local.get $x
+
+        f32.mul
+        local.tee $t2
+
+        f32.add
+
+        f32.const 2.0
+        
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+
+        local.get $t1
+        local.get $t2
+
+        f32.sub
+
+        f32.const 2.0
+
+        f32.mul
+
+        f32.store
+
+        local.get $dest
+        i32.const 40
+        i32.add
+
+        local.get $xx
+        local.get $yy
+
+        f32.add
+
+        f32.const -2.0
+        
+        f32.mul
+
+        f32.const 1.0
+
+        f32.add
+
+        f32.store
+    )
+
+    (func $transform_apply_SM (;96;) (export "transform_apply_SM") (param $dest i32) (param $scale i32) (param $mat i32)
+        (local $t f32)
+        local.get $dest
+        local.get $mat
+        f32.load
+        local.get $scale
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $mat
+        i32.const 4
+        i32.add
+        f32.load
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $mat
+        i32.const 8
+        i32.add
+        f32.load
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        local.get $mat
+        i32.const 12
+        i32.add
+        f32.load
+        local.get $scale
+        i32.const 4
+        i32.add
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $mat
+        i32.const 16
+        i32.add
+        f32.load
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        local.get $mat
+        i32.const 20
+        i32.add
+        f32.load
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        local.get $mat
+        i32.const 24
+        i32.add
+        f32.load
+        local.get $scale
+        i32.const 8
+        i32.add
+        f32.load
+        local.tee $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+        local.get $mat
+        i32.const 28
+        i32.add
+        f32.load
+        local.get $t
+        f32.mul
+        f32.store
+
+        local.get $dest
+        i32.const 40
+        i32.add
+        local.get $mat
+        i32.const 32
+        i32.add
+        f32.load
+        local.get $t
+        f32.mul
+        f32.store
+    )
+
+    (func $transform_apply_M (;68;) (export "transform_apply_M") (param $dest i32) (param $mat i32)
+        local.get $dest
+        local.get $mat
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 4
+        i32.add
+        local.get $mat
+        i32.const 4
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 8
+        i32.add
+        local.get $mat
+        i32.const 8
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 16
+        i32.add
+        local.get $mat
+        i32.const 12
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 20
+        i32.add
+        local.get $mat
+        i32.const 16
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 24
+        i32.add
+        local.get $mat
+        i32.const 20
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 32
+        i32.add
+        local.get $mat
+        i32.const 24
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 36
+        i32.add
+        local.get $mat
+        i32.const 28
+        i32.add
+        f32.load
+        f32.store
+
+        local.get $dest
+        i32.const 40
+        i32.add
+        local.get $mat
+        i32.const 32
+        i32.add
+        f32.load
         f32.store
     )
 
@@ -14855,7 +17797,7 @@
         f32.store
     )
 
-    (func $normal_from_transform_SRTi (export "normal_from_transform_SRTi") (param $dest i32) (param $from i32) (param $sx f32) (param $sy f32) (param $sz f32)
+    (func $normal_from_transform_SRT (export "normal_from_transform_SRT") (param $dest i32) (param $from i32) (param $scale i32)
         (local $a f32) (local $b f32) (local $c f32)
         (local $e f32) (local $f f32) (local $g f32)
         (local $i f32) (local $j f32) (local $k f32)
@@ -14893,10 +17835,17 @@
         f32.sub
 
         f32.const 1.0
-        local.get $sx
-        local.get $sy
+        local.get $scale
+        i32.const 4
+        i32.add
+        f32.load
+        local.get $scale
+        i32.const 8
+        i32.add
+        f32.load
         f32.mul
-        local.get $sz
+        local.get $scale
+        f32.load
         f32.mul
         f32.div
         local.tee $t
