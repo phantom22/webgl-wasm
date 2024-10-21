@@ -498,6 +498,8 @@ type BufferModule = WebAssembly.Exports & {
     normal_from_transform_RT(dest:mat3ptr,transform_matrix_RT:mat4ptr): void;
     /** constructs a normal matrix from a given transform matrix that encodes scaling, rotation and translation. */
     normal_from_transform_SRT(dest:mat3ptr,transform_matrix_SRT:mat4ptr,scale:vec3ptr): void;
+    /** constructs a normal matrix from a given transform matrix that encodes scaling, rotation and translation. */
+    normal_from_transform_USRT(dest:mat3ptr,transform_matrix_SRT:mat4ptr,uniform_scale:f32ptr): void;
     /** constructs a normal matrix from a given rotation matrix. */
     normal_from_rotation(dest:mat3ptr,rotation_matrix:mat3ptr): void;
 

@@ -37,7 +37,7 @@ function main() {
 
     const { set_viewport, malloc_mat4, set_orthographic_camera,
             view_orthographic, new_vec3, malloc_mat3, new_quat, 
-            malloc_quat, new_f32, set_camera_position, quat_from_XYZi, vec4_norm_ds,
+            malloc_quat, set_camera_position, quat_from_XYZi, vec4_norm_ds,
             mat4_identity, quat_prod, transform_apply_Q, normal_from_transform_RT } = b;
 
     canvas.width = window.innerWidth;
@@ -163,9 +163,7 @@ function main() {
     gl.bufferData(gl.UNIFORM_BUFFER, sceneUniformData, gl.DYNAMIC_DRAW);
 
     const q1 = new_quat(0,0,0,1),
-          q2 = malloc_quat(),
-          objectAngle = new_f32(0),
-          objectIncrement = new_f32(Math.PI/240);
+          q2 = malloc_quat();
 
     quat_from_XYZi(q2,-Math.PI/360,-Math.PI/300,-Math.PI/240);
     vec4_norm_ds(q2);
@@ -184,7 +182,6 @@ function main() {
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.REPEAT);
-
     
     const lastLayerIndex: number = 4;
     
@@ -206,16 +203,16 @@ function main() {
         gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
         gl.uniform1i(texLocation, 0);
 
-        mat4_identity(tMi);
+        mat4_identity(tMi); // initialize the sphere's rotation to none and position to (0,0,0)
 
         function draw() {
-            // apply rotation to sphere
+            // recalculate sphere's rotation quaternion and normalize it
             quat_prod(q1,q1,q2);
             vec4_norm_ds(q1);
-            // update sphere transform matrix with new rotation and position
-            //transform_QTi(tMi,q1,Math.cos(f32_incr(objectAngle,objectIncrement)) * 0.3,0,Math.sin(f32_get(objectAngle)) * 0.3);
-            
+
+            // update sphere transform matrix with new rotation 
             transform_apply_Q(tMi, q1);
+
             gl.uniformMatrix4fv(modelMatrixLocation, false, transformMatrix);
             // calculate normal matrix from transform matrix
             normal_from_transform_RT(nMi, tMi);
